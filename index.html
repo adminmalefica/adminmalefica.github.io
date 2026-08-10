@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ff7a00">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>Master - Maléfica Burger</title>
+<style>
+:root{--orange:#ff7a00;--bg:#101010;--card:#222;--muted:#aaa;--white:#fff}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--white)}
+header{background:var(--orange);padding:18px 16px;text-align:center;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:27px} header p{margin:5px 0 0;font-size:16px}
+nav{display:flex;gap:7px;padding:9px;background:#181818;position:sticky;top:78px;z-index:4;overflow:auto}
+nav button{white-space:nowrap;border:0;border-radius:10px;padding:11px 14px;background:#2b2b2b;color:#fff;font-weight:bold}
+nav button.active{background:var(--orange)}
+main{max-width:900px;margin:auto;padding:16px}
+h2{color:#ff941f;margin:8px 0 14px}.section{display:none}.section.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.product{background:var(--card);border:1px solid #444;border-radius:15px;padding:16px;min-height:92px;cursor:pointer}
+.product:active{transform:scale(.99)}.product b{font-size:18px}.price{color:#ffb45d;font-size:17px;margin-top:6px}
+.box{background:#f4f4f4;color:#111;border-radius:18px;padding:18px;margin-top:18px}
+input,textarea,select{width:100%;padding:13px;border:1px solid #bbb;border-radius:10px;font-size:16px;margin:5px 0 10px}
+textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}
+.btn{border:0;border-radius:11px;padding:13px 15px;font-weight:bold;font-size:16px;cursor:pointer}
+.primary{background:var(--orange);color:#fff}.secondary{background:#ddd;color:#111}.danger{background:#d33;color:#fff}
+.total{text-align:right;font-size:22px;font-weight:bold;margin:12px 0}
+.cart-item,.list-item{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #ddd;padding:9px 0}
+.darkbox{background:#1d1d1d;border-radius:15px;padding:15px;margin:10px 0}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#222;border-radius:14px;padding:15px}.stat small{color:#aaa}.stat strong{display:block;font-size:22px;margin-top:5px}
+.tablewrap{overflow:auto}.stockrow{display:grid;grid-template-columns:1.5fr .7fr .8fr .9fr;gap:8px;align-items:center;border-bottom:1px solid #444;padding:9px 0}
+.badge{padding:5px 8px;border-radius:8px;background:#333;text-align:center}.low{background:#7a2b2b}.ok{background:#245c32}
+.muted{color:#777}.empty{text-align:center;color:#777;padding:20px}
+@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}.statgrid{grid-template-columns:1fr}.stockrow{grid-template-columns:1.2fr .7fr .8fr}.stockrow input:nth-last-child(1){display:none}}
+</style>
+</head>
+<body>
+<header><h1>🍔 MALÉFICA BURGER</h1><p>MASTER · Gestión del local</p></header>
+<nav>
+<button class="active" onclick="show('pedidos',this)">🧾 Pedidos</button>
+<button onclick="show('ventas',this)">📊 Ventas</button>
+<button onclick="show('stock',this)">📦 Stock</button>
+<button onclick="show('resumen',this)">💰 Resumen</button>
+</nav>
+
+<main>
+<section id="pedidos" class="section active">
+<h2>🍔 Comandas</h2>
+<div id="products"></div>
+<div class="box">
+<h2 style="color:#111;margin-top:0">Pedido</h2>
+<label>Mesa / Nº de pedido</label><input id="orderNo" placeholder="Ej.: Mesa 3">
+<div id="cart"></div>
+<textarea id="obs" placeholder="Observaciones: sin cebolla, sin salsa, etc."></textarea>
+<div class="total">Total: $<span id="total">0</span></div>
+<div class="row">
+<button class="btn primary" onclick="saveOrder()">✅ Confirmar venta</button>
+<button class="btn secondary" onclick="clearCart()">🗑️ Nuevo pedido</button>
+</div>
+</div>
+<h2>Pedidos pendientes</h2><div id="pending"></div>
+</section>
+
+<section id="ventas" class="section">
+<h2>📊 Historial de ventas</h2>
+<div class="statgrid" id="saleStats"></div>
+<div class="darkbox">
+<label>Filtrar por fecha</label><input type="date" id="filterDate" onchange="renderSales()">
+</div>
+<div id="salesList"></div>
+</section>
+
+<section id="stock" class="section">
+<h2>📦 Stock y reposición</h2>
+<p class="muted">El stock se descuenta automáticamente al confirmar una venta. Editá cantidad, mínimo y costo para llevar el control.</p>
+<div id="stockList"></div>
+<button class="btn primary" onclick="addStock()">＋ Agregar producto/insumo</button>
+</section>
+
+<section id="resumen" class="section">
+<h2>💰 Resumen</h2>
+<div class="statgrid" id="summary"></div>
+<div class="darkbox">
+<h3>🧾 Gasto semanal de insumos</h3>
+<p class="muted">Registrá lo que gastás por semana en carne, pan, cheddar, papas, bebidas, salsas, aceite y demás insumos.</p>
+<label>Semana</label><input type="date" id="expenseDate">
+<label>Monto total de insumos</label><input type="number" id="expenseAmount" min="0" step="1" placeholder="$">
+<label>Detalle (opcional)</label><input type="text" id="expenseDetail" placeholder="Ej.: compra semanal de mercadería">
+<button class="btn primary" onclick="addExpense()">＋ Registrar gasto</button>
+<div id="expenseList"></div>
+</div>
+<div class="darkbox">
+<h3>🔄 Reposición sugerida</h3><div id="reorder"></div>
+</div>
+</section>
+</main>
+
+<script>
+const products=[
+['Classic Smash',330,'Hamburguesas'],['Doble Impacto',530,'Hamburguesas'],
+['Smash Picante',390,'Hamburguesas'],['Smash Barbacoa',390,'Hamburguesas'],
+['Smash Crocante',390,'Hamburguesas'],['Smash Intensa',390,'Hamburguesas'],
+['Hechizo de Queso',430,'Hamburguesas'],['Mini Smash',230,'Hamburguesas'],
+['Papas Encantadas',230,'Papas'],['Stella',135,'Bebidas'],['Patricia',120,'Bebidas'],
+['Zilertal',240,'Bebidas']
+];
+let stock=JSON.parse(localStorage.getItem('master_stock')||'null')||products.map((p,i)=>({name:p[0],qty:20,min:5,cost:p[0]=='Classic Smash'?110:0}));
+let sales=JSON.parse(localStorage.getItem('master_sales')||'[]');
+let pending=JSON.parse(localStorage.getItem('master_pending')||'[]');
+let expenses=JSON.parse(localStorage.getItem('master_expenses')||'[]');
+let cart=[];
+
+function money(n){return Number(n||0).toLocaleString('es-UY')}
+function save(){localStorage.setItem('master_stock',JSON.stringify(stock));localStorage.setItem('master_sales',JSON.stringify(sales));localStorage.setItem('master_pending',JSON.stringify(pending));localStorage.setItem('master_expenses',JSON.stringify(expenses))}
+function show(id,btn){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderAll()}
+function renderProducts(){
+ let groups={};products.forEach(p=>(groups[p[2]]??=[]).push(p));
+ document.getElementById('products').innerHTML=Object.entries(groups).map(([g,arr])=>`<div><h2>${g==='Hamburguesas'?'🍔':g==='Papas'?'🍟':'🍺'} ${g}</h2><div class="grid">${arr.map(p=>`<div class="product" onclick="addCart('${p[0]}')"><b>${p[0]}</b><div class="price">$${money(p[1])}</div></div>`).join('')}</div></div>`).join('');
+}
+function addCart(name){let p=products.find(x=>x[0]===name),x=cart.find(x=>x.name===name);x?x.qty++:cart.push({name,price:p[1],qty:1});renderCart()}
+function renderCart(){document.getElementById('cart').innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-item"><span>${x.qty} × ${x.name}</span><b>$${money(x.qty*x.price)}</b><button onclick="cart.splice(${i},1);renderCart()">✕</button></div>`).join(''):'<div class="empty">Todavía no agregaste productos.</div>';document.getElementById('total').textContent=money(cart.reduce((s,x)=>s+x.qty*x.price,0))}
+function clearCart(){cart=[];document.getElementById('orderNo').value='';document.getElementById('obs').value='';renderCart()}
+function saveOrder(){
+ if(!cart.length)return alert('Agregá al menos un producto.');
+ let no=document.getElementById('orderNo').value.trim()||'Sin mesa', now=new Date();
+ let sale={id:Date.now(),no,obs:document.getElementById('obs').value,items:cart.map(x=>({...x})),total:cart.reduce((s,x)=>s+x.qty*x.price,0),date:now.toISOString(),status:'Completada'};
+ sales.unshift(sale);
+ cart.forEach(x=>{let s=stock.find(y=>y.name===x.name);if(s)s.qty=Math.max(0,s.qty-x.qty)});
+ save();alert('Venta registrada.');clearCart();renderAll();
+}
+function renderPending(){document.getElementById('pending').innerHTML=pending.length?pending.map((o,i)=>`<div class="darkbox"><b>${o.no}</b><br>${o.items.map(x=>x.qty+' × '+x.name).join(', ')}<br><small>${o.obs||''}</small><br><button class="btn primary" onclick="finishPending(${i})">Marcar entregado</button></div>`).join(''):'<div class="muted">No hay pedidos pendientes.</div>'}
+function finishPending(i){pending.splice(i,1);save();renderPending()}
+function renderSales(){
+ let d=document.getElementById('filterDate').value;
+ let list=sales.filter(s=>!d||s.date.slice(0,10)===d);
+ let total=list.reduce((a,s)=>a+s.total,0), units=list.reduce((a,s)=>a+s.items.reduce((b,x)=>b+x.qty,0),0);
+ document.getElementById('saleStats').innerHTML=`<div class="stat"><small>Ventas</small><strong>${list.length}</strong></div><div class="stat"><small>Facturación</small><strong>$${money(total)}</strong></div><div class="stat"><small>Productos</small><strong>${units}</strong></div>`;
+ document.getElementById('salesList').innerHTML=list.length?list.map(s=>`<div class="darkbox"><b>${s.no}</b> · ${new Date(s.date).toLocaleString('es-UY')}<br>${s.items.map(x=>`${x.qty} × ${x.name}`).join(' · ')}<br><strong>$${money(s.total)}</strong>${s.obs?'<br>📝 '+s.obs:''}</div>`).join(''):'<div class="empty">No hay ventas para ese día.</div>';
+}
+function renderStock(){
+ document.getElementById('stockList').innerHTML=stock.map((s,i)=>`<div class="stockrow"><b>${s.name}</b><input type="number" value="${s.qty}" min="0" onchange="stock[${i}].qty=+this.value;save();renderStock();renderSummary()"><input type="number" value="${s.min}" min="0" onchange="stock[${i}].min=+this.value;save();renderStock();renderSummary()"><span class="badge ${s.qty<=s.min?'low':'ok'}">${s.qty<=s.min?'REPONER':'OK'}</span></div>`).join('')}
+function addStock(){let n=prompt('Nombre del producto o insumo:');if(!n)return;stock.push({name:n,qty:0,min:5,cost:0});save();renderStock()}
+function weekStart(dateStr){
+ let d=new Date(dateStr+'T12:00:00'); let day=d.getDay(); let diff=(day===0?-6:1-day);
+ d.setDate(d.getDate()+diff); return d.toISOString().slice(0,10);
+}
+function renderExpenses(){
+ let list=expenses.slice().sort((a,b)=>b.date.localeCompare(a.date));
+ document.getElementById('expenseList').innerHTML=list.length?
+ list.map((e,i)=>`<div class="list-item"><span><b>${e.date}</b> · ${e.detail||'Insumos'}</span><b>$${money(e.amount)}</b><button onclick="removeExpense(${i})">✕</button></div>`).join(''):
+ '<div class="muted" style="margin-top:10px">Todavía no hay gastos registrados.</div>';
+}
+function addExpense(){
+ let date=document.getElementById('expenseDate').value||new Date().toISOString().slice(0,10);
+ let amount=Number(document.getElementById('expenseAmount').value||0);
+ let detail=document.getElementById('expenseDetail').value.trim();
+ if(amount<=0)return alert('Ingresá un monto válido.');
+ expenses.push({id:Date.now(),date,amount,detail});
+ save();
+ document.getElementById('expenseAmount').value='';
+ document.getElementById('expenseDetail').value='';
+ renderSummary();
+}
+function removeExpense(index){
+ if(!confirm('¿Eliminar este gasto?'))return;
+ let list=expenses.slice().sort((a,b)=>b.date.localeCompare(a.date));
+ let item=list[index];
+ expenses=expenses.filter(e=>e.id!==item.id);
+ save(); renderSummary();
+}
+function renderSummary(){
+ let today=new Date().toISOString().slice(0,10);
+ let day=sales.filter(s=>s.date.slice(0,10)===today);
+ let revenue=day.reduce((a,s)=>a+s.total,0);
+ let gross=day.reduce((a,s)=>a+s.items.reduce((b,x)=>{
+   let st=stock.find(q=>q.name===x.name);
+   return b+x.qty*(x.price-(st?.cost||0))
+ },0),0);
+
+ let monday=weekStart(today);
+ let weeklySales=sales.filter(s=>weekStart(s.date.slice(0,10))===monday);
+ let weeklyRevenue=weeklySales.reduce((a,s)=>a+s.total,0);
+ let weeklyExpenses=expenses.filter(e=>weekStart(e.date)===monday).reduce((a,e)=>a+Number(e.amount||0),0);
+ let weeklyGross=weeklySales.reduce((a,s)=>a+s.items.reduce((b,x)=>{
+   let st=stock.find(q=>q.name===x.name);
+   return b+x.qty*(x.price-(st?.cost||0))
+ },0),0);
+ let weeklyNet=weeklyGross-weeklyExpenses;
+
+ document.getElementById('summary').innerHTML=
+ `<div class="stat"><small>Hoy</small><strong>${day.length} ventas</strong></div>
+  <div class="stat"><small>Facturación hoy</small><strong>$${money(revenue)}</strong></div>
+  <div class="stat"><small>Margen estimado hoy</small><strong>$${money(gross)}</strong></div>
+  <div class="stat"><small>Facturación semana</small><strong>$${money(weeklyRevenue)}</strong></div>
+  <div class="stat"><small>Insumos semana</small><strong>$${money(weeklyExpenses)}</strong></div>
+  <div class="stat"><small>Resultado semana</small><strong>$${money(weeklyNet)}</strong></div>`;
+
+ document.getElementById('expenseDate').value ||= today;
+ renderExpenses();
+ let low=stock.filter(s=>s.qty<=s.min);
+ document.getElementById('reorder').innerHTML=low.length?
+ low.map(s=>`<div class="list-item"><span>${s.name}</span><b>${s.qty} / mínimo ${s.min}</b></div>`).join(''):
+ '<div class="muted">No hay productos por debajo del mínimo.</div>';
+}
+function renderAll(){renderProducts();renderCart();renderPending();renderSales();renderStock();renderSummary()}
+renderAll();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+</script></body>
+</html>
