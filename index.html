@@ -3,14 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#ff7a00">
-<link rel="manifest" href="./manifest.webmanifest">
 <title>Master - Maléfica Burger</title>
 <style>
 :root{--orange:#ff7a00;--bg:#101010;--card:#222;--muted:#aaa;--white:#fff}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--white)}
-header{background:var(--orange);padding:18px 16px;text-align:center;position:sticky;top:0;z-index:5}
-header h1{margin:0;font-size:27px} header p{margin:5px 0 0;font-size:16px}
+header{background:#000;padding:10px 16px 14px;text-align:center;position:sticky;top:0;z-index:5;border-bottom:2px solid var(--orange)}
+header img{width:min(260px,72vw);max-height:180px;object-fit:contain;display:block;margin:0 auto 5px} header h1{margin:0;font-size:27px} header p{margin:5px 0 0;font-size:16px}
 nav{display:flex;gap:7px;padding:9px;background:#181818;position:sticky;top:78px;z-index:4;overflow:auto}
 nav button{white-space:nowrap;border:0;border-radius:10px;padding:11px 14px;background:#2b2b2b;color:#fff;font-weight:bold}
 nav button.active{background:var(--orange)}
@@ -35,11 +33,12 @@ textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}
 </style>
 </head>
 <body>
-<header><h1>🍔 MALÉFICA BURGER</h1><p>MASTER · Gestión del local</p></header>
+<header><img src="malefica-burger-logo.png" alt="Maléfica Burger"><p>MASTER · Gestión del local</p></header>
 <nav>
 <button class="active" onclick="show('pedidos',this)">🧾 Pedidos</button>
 <button onclick="show('ventas',this)">📊 Ventas</button>
 <button onclick="show('stock',this)">📦 Stock</button>
+<button onclick="show('gastos',this)">💸 Gastos</button>
 <button onclick="show('resumen',this)">💰 Resumen</button>
 </nav>
 
@@ -77,20 +76,52 @@ textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}
 <button class="btn primary" onclick="addStock()">＋ Agregar producto/insumo</button>
 </section>
 
+
+<section id="gastos" class="section">
+<h2>💸 Gastos</h2>
+<div class="darkbox">
+<h3>Registrar gasto</h3>
+<label>Fecha</label><input type="date" id="expenseDate">
+<label>Categoría</label>
+<select id="expenseCategory">
+<option value="Bebida">Bebida</option>
+<option value="Cerveza">Cerveza</option>
+<option value="Refresco">Refresco</option>
+<option value="Agua">Agua</option>
+<option value="Harina">Harina</option>
+<option value="Carne">Carne</option>
+<option value="Queso">Queso</option>
+<option value="Cheddar">Cheddar</option>
+<option value="Panceta">Panceta</option>
+</select>
+<label>Monto</label><input type="number" id="expenseAmount" min="0" step="1" placeholder="$">
+<label>Detalle (opcional)</label><input type="text" id="expenseDetail" placeholder="Ej.: compra semanal">
+<button class="btn primary" onclick="addExpense()">＋ Registrar gasto</button>
+</div>
+
+<div class="statgrid" id="expenseStats"></div>
+
+<div class="darkbox">
+<h3>📅 Resumen de la semana</h3>
+<div id="weeklyExpenseBreakdown"></div>
+</div>
+
+<div class="darkbox">
+<h3>📆 Resumen del mes</h3>
+<label>Mes a consultar</label><input type="month" id="expenseMonth" onchange="renderExpenses()">
+<div id="monthlyExpenseBreakdown"></div>
+</div>
+
+<div class="darkbox">
+<h3>📋 Historial</h3>
+<div id="expenseList"></div>
+</div>
+</section>
+
 <section id="resumen" class="section">
 <h2>💰 Resumen</h2>
 <div class="statgrid" id="summary"></div>
-<div class="darkbox">
-<h3>🧾 Gasto semanal de insumos</h3>
-<p class="muted">Registrá lo que gastás por semana en carne, pan, cheddar, papas, bebidas, salsas, aceite y demás insumos.</p>
-<label>Semana</label><input type="date" id="expenseDate">
-<label>Monto total de insumos</label><input type="number" id="expenseAmount" min="0" step="1" placeholder="$">
-<label>Detalle (opcional)</label><input type="text" id="expenseDetail" placeholder="Ej.: compra semanal de mercadería">
-<button class="btn primary" onclick="addExpense()">＋ Registrar gasto</button>
-<div id="expenseList"></div>
-</div>
-<div class="darkbox">
-<h3>🔄 Reposición sugerida</h3><div id="reorder"></div>
+<div class="darkbox"><h3>🔄 Reposición sugerida</h3><div id="reorder"></div>
 </div>
 </section>
 </main>
@@ -144,30 +175,71 @@ function weekStart(dateStr){
  let d=new Date(dateStr+'T12:00:00'); let day=d.getDay(); let diff=(day===0?-6:1-day);
  d.setDate(d.getDate()+diff); return d.toISOString().slice(0,10);
 }
+
+const expenseCategories=['Bebida','Cerveza','Refresco','Agua','Harina','Carne','Queso','Cheddar','Panceta'];
+
+function expenseTotal(list){return list.reduce((a,e)=>a+Number(e.amount||0),0)}
+function categoryBreakdown(list){
+  return expenseCategories.map(c=>({
+    category:c,
+    total:expenseTotal(list.filter(e=>e.category===c))
+  })).filter(x=>x.total>0);
+}
+function breakdownHTML(list){
+  let rows=categoryBreakdown(list);
+  return rows.length
+    ? rows.map(x=>`<div class="list-item"><span>${x.category}</span><b>$${money(x.total)}</b></div>`).join('')
+    : '<div class="muted">No hay gastos registrados en este período.</div>';
+}
 function renderExpenses(){
- let list=expenses.slice().sort((a,b)=>b.date.localeCompare(a.date));
- document.getElementById('expenseList').innerHTML=list.length?
- list.map((e,i)=>`<div class="list-item"><span><b>${e.date}</b> · ${e.detail||'Insumos'}</span><b>$${money(e.amount)}</b><button onclick="removeExpense(${i})">✕</button></div>`).join(''):
- '<div class="muted" style="margin-top:10px">Todavía no hay gastos registrados.</div>';
+  let today=new Date().toISOString().slice(0,10);
+  let monday=weekStart(today);
+  let month=(document.getElementById('expenseMonth')?.value)||today.slice(0,7);
+  let weekly=expenses.filter(e=>weekStart(e.date)===monday);
+  let monthly=expenses.filter(e=>e.date.slice(0,7)===month);
+  let weekTotal=expenseTotal(weekly), monthTotal=expenseTotal(monthly);
+
+  document.getElementById('expenseStats').innerHTML=
+    `<div class="stat"><small>Esta semana</small><strong>$${money(weekTotal)}</strong></div>
+     <div class="stat"><small>Este mes</small><strong>$${money(monthTotal)}</strong></div>
+     <div class="stat"><small>Gastos registrados</small><strong>${expenses.length}</strong></div>`;
+
+  document.getElementById('weeklyExpenseBreakdown').innerHTML=breakdownHTML(weekly);
+  document.getElementById('monthlyExpenseBreakdown').innerHTML=breakdownHTML(monthly);
+
+  let list=expenses.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  document.getElementById('expenseList').innerHTML=list.length?
+    list.map(e=>`<div class="list-item">
+      <span><b>${e.date}</b> · <b>${e.category||'Bebida'}</b>${e.detail?' · '+e.detail:''}</span>
+      <span><b>$${money(e.amount)}</b>
+      <button onclick="removeExpenseById(${e.id})">✕</button></span>
+    </div>`).join(''):
+    '<div class="muted">Todavía no hay gastos registrados.</div>';
+
+  document.getElementById('expenseDate').value ||= today;
+  document.getElementById('expenseMonth').value ||= today.slice(0,7);
 }
 function addExpense(){
- let date=document.getElementById('expenseDate').value||new Date().toISOString().slice(0,10);
- let amount=Number(document.getElementById('expenseAmount').value||0);
- let detail=document.getElementById('expenseDetail').value.trim();
- if(amount<=0)return alert('Ingresá un monto válido.');
- expenses.push({id:Date.now(),date,amount,detail});
- save();
- document.getElementById('expenseAmount').value='';
- document.getElementById('expenseDetail').value='';
- renderSummary();
+  let date=document.getElementById('expenseDate').value||new Date().toISOString().slice(0,10);
+  let category=document.getElementById('expenseCategory').value;
+  let amount=Number(document.getElementById('expenseAmount').value||0);
+  let detail=document.getElementById('expenseDetail').value.trim();
+  if(amount<=0)return alert('Ingresá un monto válido.');
+  expenses.push({id:Date.now(),date,category,amount,detail});
+  save();
+  document.getElementById('expenseAmount').value='';
+  document.getElementById('expenseDetail').value='';
+  renderSummary();
+  renderExpenses();
 }
-function removeExpense(index){
- if(!confirm('¿Eliminar este gasto?'))return;
- let list=expenses.slice().sort((a,b)=>b.date.localeCompare(a.date));
- let item=list[index];
- expenses=expenses.filter(e=>e.id!==item.id);
- save(); renderSummary();
+function removeExpenseById(id){
+  if(!confirm('¿Eliminar este gasto?'))return;
+  expenses=expenses.filter(e=>e.id!==id);
+  save();
+  renderSummary();
+  renderExpenses();
 }
+
 function renderSummary(){
  let today=new Date().toISOString().slice(0,10);
  let day=sales.filter(s=>s.date.slice(0,10)===today);
@@ -196,6 +268,7 @@ function renderSummary(){
   <div class="stat"><small>Resultado semana</small><strong>$${money(weeklyNet)}</strong></div>`;
 
  document.getElementById('expenseDate').value ||= today;
+ document.getElementById('expenseMonth').value ||= today.slice(0,7);
  renderExpenses();
  let low=stock.filter(s=>s.qty<=s.min);
  document.getElementById('reorder').innerHTML=low.length?
@@ -205,9 +278,5 @@ function renderSummary(){
 function renderAll(){renderProducts();renderCart();renderPending();renderSales();renderStock();renderSummary()}
 renderAll();
 </script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
-}
-</script></body>
+</body>
 </html>
