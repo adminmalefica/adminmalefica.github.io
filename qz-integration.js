@@ -104,6 +104,40 @@
     return null;
   }
 
+  function installProductSelectionHighlight(){
+    if(!document.getElementById('malefica-selected-product-style')){
+      const style=document.createElement('style');
+      style.id='malefica-selected-product-style';
+      style.textContent='.product.malefica-selected{border:3px solid var(--orange)!important;box-shadow:0 0 0 2px rgba(255,122,0,.18);transition:border-color .12s,box-shadow .12s;}';
+      document.head.appendChild(style);
+    }
+
+    function syncSelectedProducts(){
+      let selected=new Set();
+      try{
+        if(typeof cart!=='undefined' && Array.isArray(cart)) cart.forEach(x=>selected.add(x.name));
+      }catch(e){}
+      document.querySelectorAll('.product').forEach(el=>{
+        const name=(el.querySelector('b')?.textContent||'').trim();
+        el.classList.toggle('malefica-selected',selected.has(name));
+      });
+    }
+
+    document.addEventListener('click',function(e){
+      if(e.target.closest('.product') || e.target.closest('#cart button')) setTimeout(syncSelectedProducts,0);
+    },true);
+
+    const cartEl=document.getElementById('cart');
+    if(cartEl){
+      new MutationObserver(syncSelectedProducts).observe(cartEl,{childList:true,subtree:true,characterData:true});
+    }
+    const productsEl=document.getElementById('products');
+    if(productsEl){
+      new MutationObserver(syncSelectedProducts).observe(productsEl,{childList:true,subtree:true});
+    }
+    syncSelectedProducts();
+  }
+
   function installWrapper(){
     if(typeof window.saveOrder!=='function'){
       setTimeout(installWrapper,100);
@@ -134,5 +168,6 @@
     console.log('Integración TP95W/QZ Tray activa.');
   }
 
+  installProductSelectionHighlight();
   installWrapper();
 })();
