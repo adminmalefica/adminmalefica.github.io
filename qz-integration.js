@@ -171,3 +171,30 @@
   installProductSelectionHighlight();
   installWrapper();
 })();
+
+// Las hamburguesas se acumulan por cantidad: tocar la misma otra vez suma 1.
+(function(){
+  if(typeof window.addCart!=='function') return;
+  const originalAddCart=window.addCart;
+  window.addCart=function(name){
+    let p;
+    try{ p=products.find(x=>x.name===name); }catch(e){ p=null; }
+    if(!p || p.cat!=='Hamburguesas') return originalAddCart.apply(this,arguments);
+
+    let price=p.price;
+    if(price<=0){
+      let v=prompt('Ingresá el precio de '+name+':');
+      if(v===null) return;
+      price=Number(v||0);
+      if(price<=0) return alert('Precio inválido.');
+    }
+
+    let existing=cart.find(x=>x.name===name);
+    if(existing){
+      existing.qty=Number(existing.qty||0)+1;
+    }else{
+      cart.push({name,price,qty:1});
+    }
+    renderCart();
+  };
+})();
