@@ -233,8 +233,6 @@ function printTicket(i){
  if(o.paymentStatus!=='Pagado')return alert('Primero confirmá el pago.');
  const w=window.open('','_blank','width=360,height=650');
  w.document.write(`<html><head><title>Pedido ${o.no}</title><style>body{font-family:monospace;width:280px;margin:10px auto}h2{text-align:center}.r{display:flex;justify-content:space-between;border-bottom:1px dashed #999;padding:4px 0}</style></head><body><h2>MALÉFICA BURGER</h2><div>Pedido #${o.no}</div><div>${o.customer||''}</div><div>${o.type} · ${o.source}</div><div>${new Date(o.date).toLocaleString('es-UY')}</div><hr>${o.items.map(x=>`<div class="r"><span>${x.qty} × ${x.name}</span><span>$${money(x.qty*x.price)}</span></div>`).join('')}<hr><b>TOTAL $${money(o.total)}</b><br><b>${o.paymentStatus} · ${o.paymentMethod}</b>${o.obs?'<p>Obs: '+o.obs+'</p>':''}<script>window.onload=()=>window.print()<\/script>
-<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
-<script src="qz-integration.js"></script>
 </body></html>`);
  w.document.close();
 }
@@ -285,5 +283,8 @@ function renderSummary(){
 function renderAll(){setOrderNo();renderProducts();renderCart();renderPending();renderSales();renderStock();renderSummary()}
 renderAll();
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
+<script src="qz-integration.js"></script>
 </body>
 </html>
