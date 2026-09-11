@@ -1,3 +1,35 @@
+// Estado inicial limpio solicitado: caja en cero y 60 hamburguesas.
+(function(){
+  const RESET_VERSION='2026-09-11-reset-60-v1';
+  const resetNeeded=localStorage.getItem('master_reset_version')!==RESET_VERSION;
+
+  if(resetNeeded){
+    localStorage.setItem('master_sales','[]');
+    localStorage.setItem('master_pending','[]');
+    localStorage.setItem('master_expenses','[]');
+    localStorage.setItem('master_next_order','1');
+    localStorage.setItem('master_burger_stock','60');
+    localStorage.setItem('master_reset_version',RESET_VERSION);
+    try{ sales=[]; pending=[]; expenses=[]; nextOrderNo=1; cart=[]; }catch(e){}
+  }
+
+  const burgerQty=Math.max(0,Number(localStorage.getItem('master_burger_stock')||60));
+  try{ stock=[{name:'Hamburguesas',qty:burgerQty,min:10,cost:0}]; }catch(e){}
+  localStorage.setItem('master_stock',JSON.stringify([{name:'Hamburguesas',qty:burgerQty,min:10,cost:0}]));
+
+  setTimeout(function(){
+    try{ renderAll(); }catch(e){}
+  },0);
+
+  document.addEventListener('change',function(e){
+    if(!e.target.closest('#stockList')) return;
+    try{
+      const s=stock.find(x=>x.name==='Hamburguesas');
+      if(s) localStorage.setItem('master_burger_stock',String(Math.max(0,Number(s.qty||0))));
+    }catch(err){}
+  },true);
+})();
+
 (function(){
   const PRINTER_NAME='TP95W Malefica';
   const SIGNER_URL='http://127.0.0.1:8183';
@@ -104,6 +136,32 @@
     return null;
   }
 
+  function burgerUnits(sale){
+    let units=0;
+    (sale.items||[]).forEach(function(item){
+      let isBurger=false;
+      try{
+        const p=products.find(x=>x.name===item.name);
+        isBurger=!!p && (p.cat==='Hamburguesas' || item.name==='Combo Apertura' || item.name==='Combo Junior');
+      }catch(e){
+        isBurger=/smash|impacto|hechizo|combo apertura|combo junior/i.test(item.name||'');
+      }
+      if(isBurger) units+=Number(item.qty||0);
+    });
+    return units;
+  }
+
+  function discountBurgerStock(sale){
+    const units=burgerUnits(sale);
+    if(units<=0) return;
+    const current=Math.max(0,Number(localStorage.getItem('master_burger_stock')||0));
+    const next=Math.max(0,current-units);
+    localStorage.setItem('master_burger_stock',String(next));
+    try{ stock=[{name:'Hamburguesas',qty:next,min:10,cost:0}]; }catch(e){}
+    localStorage.setItem('master_stock',JSON.stringify([{name:'Hamburguesas',qty:next,min:10,cost:0}]));
+    try{ renderStock(); renderSummary(); }catch(e){}
+  }
+
   function installProductSelectionHighlight(){
     if(!document.getElementById('malefica-selected-product-style')){
       const style=document.createElement('style');
@@ -155,6 +213,7 @@
       setTimeout(async()=>{
         const sale=findNewSale(beforeIds);
         if(!sale) return;
+        discountBurgerStock(sale);
         try{ await printSale(sale); }
         catch(err){
           console.error('Error de impresión QZ:',err);
