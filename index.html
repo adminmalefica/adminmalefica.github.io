@@ -19,6 +19,7 @@ h2{color:#ff941f;margin:8px 0 14px}.section{display:none}.section.active{display
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .product{background:var(--card);border:1px solid #444;border-radius:15px;padding:14px;min-height:90px;cursor:pointer}
 .product:active{transform:scale(.99)}
+.product.selected{border:3px solid var(--orange);box-shadow:0 0 0 2px rgba(255,122,0,.28)}
 .product{overflow:hidden}
 .product .foodimg{width:100%;height:125px;object-fit:cover;border-radius:11px;margin:-4px 0 10px;background:#111;display:block}
 .product .foodemoji{height:125px;border-radius:11px;margin:-4px 0 10px;background:linear-gradient(135deg,#191919,#0d0d0d);display:flex;align-items:center;justify-content:center;font-size:56px}
@@ -282,6 +283,16 @@ function renderSummary(){
 }
 function renderAll(){setOrderNo();renderProducts();renderCart();renderPending();renderSales();renderStock();renderSummary()}
 renderAll();
+function syncProductSelection(){
+ const selectedNames=[...document.querySelectorAll('#cart .cart-item span')].map(el=>el.textContent.replace(/^\d+\s*×\s*/, '').trim());
+ document.querySelectorAll('.product').forEach(card=>{
+  const name=card.querySelector('b')?.textContent.trim();
+  card.classList.toggle('selected',selectedNames.includes(name));
+ });
+}
+const cartSelectionObserver=new MutationObserver(syncProductSelection);
+cartSelectionObserver.observe(document.getElementById('cart'),{childList:true,subtree:true});
+syncProductSelection();
 </script>
 
 
