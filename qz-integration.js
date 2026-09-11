@@ -51,8 +51,11 @@
     ticket += 'Pago: '+payment+'\n';
     ticket += 'Estado: '+payStatus+'\n';
     ticket += ESC+'E'+'\x01'+'TOTAL: $'+money(sale.total)+ESC+'E'+'\x00'+'\n';
-    ticket += '\n\n\n';
-    ticket += GS+'V'+'\x00';
+
+    // Avanza papel antes del corte y usa el comando ESC/POS de corte parcial.
+    // La TP95W informa autocortador en el self-test.
+    ticket += ESC+'d'+'\x04';
+    ticket += GS+'V'+'\x42'+'\x00';
     return ticket;
   }
 
