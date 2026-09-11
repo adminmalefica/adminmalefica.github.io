@@ -1,0 +1,48 @@
+name: Integrar QZ Tray en Master
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'qz-integration.js'
+      - '.github/workflows/integrate-qz.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Insertar scripts QZ en index.html
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<script src="qz-integration.js"></script>'
+          if marker not in s:
+              inject='\n<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>\n<script src="qz-integration.js"></script>\n'
+              if '</body>' not in s:
+                  raise SystemExit('No se encontró </body> en index.html')
+              s=s.replace('</body>', inject+'</body>', 1)
+              p.write_text(s,encoding='utf-8')
+              print('Integración agregada a index.html')
+          else:
+              print('index.html ya tenía la integración')
+          PY
+
+      - name: Commit y push
+        run: |
+          if git diff --quiet; then
+            echo "Sin cambios"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Integrar impresión automática TP95W en el Master"
+          git push
