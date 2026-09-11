@@ -20,35 +20,19 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           path = Path('index.html')
           s = path.read_text(encoding='utf-8')
-
           css_marker = '.product:active{transform:scale(.99)}'
           css_selected = '.product.selected{border:3px solid var(--orange);box-shadow:0 0 0 2px rgba(255,122,0,.28)}'
           if css_selected not in s:
               if css_marker not in s:
                   raise SystemExit('No se encontro el marcador CSS esperado')
               s = s.replace(css_marker, css_marker + '\n' + css_selected, 1)
-
-          js_selected = r'''
-function syncProductSelection(){
- const selectedNames=[...document.querySelectorAll('#cart .cart-item span')].map(el=>el.textContent.replace(/^\d+\s*×\s*/, '').trim());
- document.querySelectorAll('.product').forEach(card=>{
-  const name=card.querySelector('b')?.textContent.trim();
-  card.classList.toggle('selected',selectedNames.includes(name));
- });
-}
-const cartSelectionObserver=new MutationObserver(syncProductSelection);
-cartSelectionObserver.observe(document.getElementById('cart'),{childList:true,subtree:true});
-syncProductSelection();
-'''.strip()
-
+          js_selected = "function syncProductSelection(){\n const selectedNames=[...document.querySelectorAll('#cart .cart-item span')].map(el=>el.textContent.replace(/^\\d+\\s*×\\s*/, '').trim());\n document.querySelectorAll('.product').forEach(card=>{\n  const name=card.querySelector('b')?.textContent.trim();\n  card.classList.toggle('selected',selectedNames.includes(name));\n });\n}\nconst cartSelectionObserver=new MutationObserver(syncProductSelection);\ncartSelectionObserver.observe(document.getElementById('cart'),{childList:true,subtree:true});\nsyncProductSelection();"
           if 'function syncProductSelection()' not in s:
               if '</script>' not in s:
                   raise SystemExit('No se encontro </script>')
               s = s.replace('</script>', js_selected + '\n</script>', 1)
-
           path.write_text(s, encoding='utf-8')
           PY
 
