@@ -1,5 +1,7 @@
 (function(){
   const PRINTER_NAME='TP95W Malefica';
+  const SIGNER_URL='http://127.0.0.1:8183';
+  let securityReady=false;
 
   function money(n){
     try{return Number(n||0).toLocaleString('es-UY');}catch(e){return String(n||0);}
@@ -11,8 +13,33 @@
       .replace(/\u00d7/g,'x');
   }
 
+  function configureQZSecurity(){
+    if(securityReady || !window.qz) return;
+    qz.security.setCertificatePromise(function(resolve,reject){
+      fetch(SIGNER_URL+'/certificate',{cache:'no-store'})
+        .then(function(r){if(!r.ok) throw new Error('Firmador local no disponible'); return r.text();})
+        .then(resolve).catch(reject);
+    });
+    qz.security.setSignatureAlgorithm('SHA512');
+    qz.security.setSignaturePromise(function(toSign){
+      return function(resolve,reject){
+        fetch(SIGNER_URL+'/sign',{
+          method:'POST',
+          headers:{'Content-Type':'text/plain;charset=UTF-8'},
+          body:toSign,
+          cache:'no-store'
+        })
+          .then(function(r){if(!r.ok) throw new Error('No se pudo firmar la solicitud QZ'); return r.text();})
+          .then(function(sig){resolve(sig.trim());}).catch(reject);
+      };
+    });
+    securityReady=true;
+    console.log('Firma local QZ configurada.');
+  }
+
   async function ensureQZ(){
     if(!window.qz) throw new Error('No se pudo cargar QZ Tray en la página.');
+    configureQZSecurity();
     if(!qz.websocket.isActive()) await qz.websocket.connect();
   }
 
@@ -51,9 +78,6 @@
     ticket += 'Pago: '+payment+'\n';
     ticket += 'Estado: '+payStatus+'\n';
     ticket += ESC+'E'+'\x01'+'TOTAL: $'+money(sale.total)+ESC+'E'+'\x00'+'\n';
-
-    // Avanza papel antes del corte y usa el comando ESC/POS de corte parcial.
-    // La TP95W informa autocortador en el self-test.
     ticket += ESC+'d'+'\x04';
     ticket += GS+'V'+'\x42'+'\x00';
     return ticket;
@@ -91,18 +115,14 @@
     function wrappedSaveOrder(){
       const beforeIds=new Set(getSales().map(x=>x.id));
       let result;
-      try{
-        result=original.apply(this,arguments);
-      }catch(err){
-        throw err;
-      }
+      try{ result=original.apply(this,arguments); }
+      catch(err){ throw err; }
 
       setTimeout(async()=>{
         const sale=findNewSale(beforeIds);
         if(!sale) return;
-        try{
-          await printSale(sale);
-        }catch(err){
+        try{ await printSale(sale); }
+        catch(err){
           console.error('Error de impresión QZ:',err);
           alert('El pedido quedó guardado, pero no se pudo imprimir en la TP95W.\n\n'+(err&&err.message?err.message:err));
         }
