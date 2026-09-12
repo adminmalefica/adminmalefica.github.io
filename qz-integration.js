@@ -51,3 +51,36 @@
     renderCart();
   };
 })();
+
+// Impresión de tickets: evita que el navegador bloquee la ventana emergente.
+(function(){
+  window.printTicket=function(i){
+    const o=(window.pending||[])[i];
+    if(!o)return;
+    if(o.paymentStatus!=='Pagado')return alert('Primero confirmá el pago.');
+
+    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const html=`<!doctype html><html><head><meta charset="utf-8"><title>Pedido ${esc(o.no)}</title><style>@page{size:80mm auto;margin:2mm}html,body{margin:0;padding:0;background:#fff;color:#000}body{font-family:monospace;width:72mm;padding:2mm;font-size:12px}h2{text-align:center;margin:0 0 8px}.r{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed #999;padding:4px 0}.total{font-size:16px;margin-top:8px}</style></head><body><h2>MALÉFICA BURGER</h2><div>Pedido #${esc(o.no)}</div><div>${esc(o.customer||'')}</div><div>${esc(o.type)} · ${esc(o.source)}</div><div>${new Date(o.date).toLocaleString('es-UY')}</div><hr>${(o.items||[]).map(x=>`<div class="r"><span>${esc(x.qty)} × ${esc(x.name)}</span><span>$${money(x.qty*x.price)}</span></div>`).join('')}<hr><div class="total"><b>TOTAL $${money(o.total)}</b></div><b>${esc(o.paymentStatus)} · ${esc(o.paymentMethod)}</b>${o.obs?'<p>Obs: '+esc(o.obs)+'</p>':''}</body></html>`;
+
+    let frame=document.getElementById('malefica-print-frame');
+    if(frame)frame.remove();
+    frame=document.createElement('iframe');
+    frame.id='malefica-print-frame';
+    frame.style.position='fixed';
+    frame.style.right='0';
+    frame.style.bottom='0';
+    frame.style.width='1px';
+    frame.style.height='1px';
+    frame.style.opacity='0';
+    frame.style.pointerEvents='none';
+    frame.style.border='0';
+    document.body.appendChild(frame);
+
+    const doc=frame.contentWindow.document;
+    doc.open();doc.write(html);doc.close();
+    setTimeout(()=>{
+      try{frame.contentWindow.focus();frame.contentWindow.print();}
+      catch(e){console.error('Error al imprimir ticket:',e);alert('No se pudo abrir la impresión. Probá nuevamente.');}
+    },250);
+  };
+})();
