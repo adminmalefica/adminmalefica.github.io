@@ -257,3 +257,90 @@
     renderCart();
   };
 })();
+
+// Caja clara por forma de pago: separa efectivo, Mercado Pago, POS, transferencias y pendientes.
+(function(){
+  function moneyCash(n){
+    try{return Number(n||0).toLocaleString('es-UY');}catch(e){return String(n||0);}
+  }
+
+  function installCashBreakdown(){
+    if(typeof window.renderSales!=='function'){
+      setTimeout(installCashBreakdown,100);
+      return;
+    }
+    if(window.renderSales.__cashBreakdownWrapped) return;
+
+    const originalRenderSales=window.renderSales;
+    function renderCashBreakdown(){
+      originalRenderSales.apply(this,arguments);
+      const stats=document.getElementById('saleStats');
+      if(!stats) return;
+
+      let box=document.getElementById('paymentBreakdownBox');
+      if(!box){
+        box=document.createElement('div');
+        box.id='paymentBreakdownBox';
+        box.className='darkbox';
+        box.innerHTML='<h3>💳 Caja por forma de pago</h3><div id="paymentBreakdown"></div>';
+        stats.insertAdjacentElement('afterend',box);
+      }
+
+      let d='';
+      const filter=document.getElementById('filterDate');
+      if(filter) d=filter.value;
+      let list=[];
+      try{ list=(sales||[]).filter(s=>!d||String(s.date||'').slice(0,10)===d); }catch(e){}
+      const paid=list.filter(s=>s.paymentStatus==='Pagado');
+      const total=list.reduce((a,s)=>a+Number(s.total||0),0);
+      const collected=paid.reduce((a,s)=>a+Number(s.total||0),0);
+      const pendingTotal=list.filter(s=>s.paymentStatus!=='Pagado').reduce((a,s)=>a+Number(s.total||0),0);
+      const byMethod={};
+      paid.forEach(s=>{
+        const m=s.paymentMethod||'Sin dato';
+        byMethod[m]=(byMethod[m]||0)+Number(s.total||0);
+      });
+
+      const units=list.reduce((a,s)=>a+(s.items||[]).reduce((b,x)=>b+Number(x.qty||0),0),0);
+      stats.innerHTML='<div class="stat"><small>Ventas</small><strong>'+list.length+'</strong></div>'+
+        '<div class="stat"><small>Facturación</small><strong>$'+moneyCash(total)+'</strong></div>'+
+        '<div class="stat"><small>Cobrado</small><strong>$'+moneyCash(collected)+'</strong></div>';
+
+      const methods=['Efectivo','Mercado Pago','POS','Transferencia','PedidosYa'];
+      const el=document.getElementById('paymentBreakdown');
+      if(el){
+        el.innerHTML=methods.map(m=>'<div class="list-item"><span>'+m+'</span><b>$'+moneyCash(byMethod[m]||0)+'</b></div>').join('')+
+          '<div class="list-item"><span><b>Pendiente de cobro</b></span><b>$'+moneyCash(pendingTotal)+'</b></div>'+
+          '<div class="list-item"><span>Productos vendidos</span><b>'+units+'</b></div>';
+      }
+
+      const cards=document.querySelectorAll('#salesList .darkbox');
+      cards.forEach((card,i)=>{
+        const sale=list[i];
+        if(!sale || !sale.paymentMethod) return;
+        if(card.querySelector('.cash-method-tag')) return;
+        const tag=document.createElement('div');
+        tag.className='cash-method-tag small muted';
+        tag.textContent='Pago: '+sale.paymentMethod;
+        card.appendChild(tag);
+      });
+    }
+    renderCashBreakdown.__cashBreakdownWrapped=true;
+    window.renderSales=renderCashBreakdown;
+
+    const originalRenderAll=window.renderAll;
+    if(typeof originalRenderAll==='function' && !originalRenderAll.__cashBreakdownWrapped){
+      const wrappedRenderAll=function(){
+        const r=originalRenderAll.apply(this,arguments);
+        setTimeout(()=>{try{window.renderSales();}catch(e){}},0);
+        return r;
+      };
+      wrappedRenderAll.__cashBreakdownWrapped=true;
+      window.renderAll=wrappedRenderAll;
+    }
+
+    try{window.renderSales();}catch(e){}
+  }
+
+  installCashBreakdown();
+})();
