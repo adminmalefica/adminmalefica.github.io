@@ -1,0 +1,68 @@
+name: Fix cash breakdown
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-cash-breakdown.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-master:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch cash breakdown
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = '<div class="statgrid" id="saleStats"></div>\n<div class="darkbox">\n<label>Filtrar por fecha</label><input type="date" id="filterDate" onchange="renderSales()">'
+          new = '<div class="statgrid" id="saleStats"></div>\n<div class="darkbox"><h3>💳 Caja por forma de pago</h3><div id="paymentBreakdown"></div></div>\n<div class="darkbox">\n<label>Filtrar por fecha</label><input type="date" id="filterDate" onchange="renderSales()">'
+          if old not in s:
+              raise SystemExit('No se encontró bloque de ventas')
+          s = s.replace(old, new, 1)
+
+          old = '''function renderSales(){
+ let d=document.getElementById('filterDate').value;
+ let list=sales.filter(s=>!d||s.date.slice(0,10)===d);
+ let total=list.reduce((a,s)=>a+s.total,0),units=list.reduce((a,s)=>a+s.items.reduce((b,x)=>b+x.qty,0),0);
+ document.getElementById('saleStats').innerHTML=`<div class="stat"><small>Ventas</small><strong>${list.length}</strong></div><div class="stat"><small>Facturación</small><strong>$${money(total)}</strong></div><div class="stat"><small>Productos</small><strong>${units}</strong></div>`;
+ let counts={};list.forEach(s=>s.items.forEach(x=>counts[x.name]=(counts[x.name]||0)+x.qty));'''
+          new = '''function renderSales(){
+ let d=document.getElementById('filterDate').value;
+ let list=sales.filter(s=>!d||s.date.slice(0,10)===d);
+ let total=list.reduce((a,s)=>a+s.total,0),units=list.reduce((a,s)=>a+s.items.reduce((b,x)=>b+x.qty,0),0);
+ let paidList=list.filter(s=>s.paymentStatus==='Pagado');
+ let collected=paidList.reduce((a,s)=>a+s.total,0);
+ let byMethod={}; paidList.forEach(s=>{let m=s.paymentMethod||'Sin dato';byMethod[m]=(byMethod[m]||0)+Number(s.total||0)});
+ let pendingTotal=list.filter(s=>s.paymentStatus!=='Pagado').reduce((a,s)=>a+Number(s.total||0),0);
+ document.getElementById('saleStats').innerHTML=`<div class="stat"><small>Ventas</small><strong>${list.length}</strong></div><div class="stat"><small>Facturación</small><strong>$${money(total)}</strong></div><div class="stat"><small>Cobrado</small><strong>$${money(collected)}</strong></div>`;
+ let methods=['Efectivo','Mercado Pago','POS','Transferencia','PedidosYa'];
+ document.getElementById('paymentBreakdown').innerHTML=methods.map(m=>`<div class="list-item"><span>${m}</span><b>$${money(byMethod[m]||0)}</b></div>`).join('')+`<div class="list-item"><span><b>Pendiente de cobro</b></span><b>$${money(pendingTotal)}</b></div>`;
+ let counts={};list.forEach(s=>s.items.forEach(x=>counts[x.name]=(counts[x.name]||0)+x.qty));'''
+          if old not in s:
+              raise SystemExit('No se encontró función renderSales')
+          s = s.replace(old, new, 1)
+
+          old = "<br><strong>$${money(s.total)}</strong> · ${s.paymentStatus||'Sin dato'}${s.obs?'<br>📝 '+s.obs:''}</div>"
+          new = "<br><strong>$${money(s.total)}</strong> · ${s.paymentMethod||'Sin medio'} · ${s.paymentStatus||'Sin dato'}${s.obs?'<br>📝 '+s.obs:''}</div>"
+          if old not in s:
+              raise SystemExit('No se encontró línea de historial')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Show cash totals by payment method"
+          git push origin main
