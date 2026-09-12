@@ -52,11 +52,11 @@
   };
 })();
 
-// Impresión de tickets: evita que el navegador bloquee la ventana emergente.
+// Impresión de tickets sin ventana emergente.
 (function(){
   window.printTicket=function(i){
-    const o=(window.pending||[])[i];
-    if(!o)return;
+    const o=pending[i];
+    if(!o)return alert('No se encontró el pedido para imprimir.');
     if(o.paymentStatus!=='Pagado')return alert('Primero confirmá el pago.');
 
     const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -81,6 +81,6 @@
     setTimeout(()=>{
       try{frame.contentWindow.focus();frame.contentWindow.print();}
       catch(e){console.error('Error al imprimir ticket:',e);alert('No se pudo abrir la impresión. Probá nuevamente.');}
-    },250);
+    },400);
   };
 })();
