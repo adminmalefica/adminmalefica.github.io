@@ -48,26 +48,55 @@
   };
 })();
 
-// Impresion directa desde la pagina actual. No usa popups ni iframes.
+// Impresion de ticket robusta: captura directamente el click del boton Imprimir.
 (function(){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  window.printTicket=function(i){
+
+  function doPrint(i){
     try{
       const o=pending[i];
       if(!o){alert('No se encontro el pedido para imprimir.');return;}
       if(o.paymentStatus!=='Pagado'){alert('Primero confirma el pago.');return;}
+
       document.getElementById('malefica-ticket-print')?.remove();
       document.getElementById('malefica-ticket-print-style')?.remove();
+
       const ticket=document.createElement('div');
       ticket.id='malefica-ticket-print';
       ticket.innerHTML=`<h2>MALEFICA BURGER</h2><div>Pedido #${esc(o.no)}</div><div>${esc(o.customer||'')}</div><div>${esc(o.type)} - ${esc(o.source)}</div><div>${new Date(o.date).toLocaleString('es-UY')}</div><hr>${(o.items||[]).map(x=>`<div class="tr"><span>${esc(x.qty)} x ${esc(x.name)}</span><span>$${money(x.qty*x.price)}</span></div>`).join('')}<hr><div class="tt"><b>TOTAL $${money(o.total)}</b></div><b>${esc(o.paymentStatus)} - ${esc(o.paymentMethod)}</b>${o.obs?'<p>Obs: '+esc(o.obs)+'</p>':''}`;
       ticket.style.display='none';
       document.body.appendChild(ticket);
+
       const st=document.createElement('style');
       st.id='malefica-ticket-print-style';
-      st.textContent=`@media print{@page{size:80mm auto;margin:2mm}body>*{display:none!important}#malefica-ticket-print{display:block!important;position:absolute!important;left:0!important;top:0!important;width:72mm!important;background:#fff!important;color:#000!important;font-family:monospace!important;font-size:12px!important;padding:2mm!important}#malefica-ticket-print h2{text-align:center!important;color:#000!important;margin:0 0 8px!important}#malefica-ticket-print .tr{display:flex!important;justify-content:space-between!important;gap:6px!important;border-bottom:1px dashed #999!important;padding:4px 0!important}#malefica-ticket-print .tt{font-size:16px!important;margin:7px 0!important}}`;
+      st.textContent='@media print{@page{size:80mm auto;margin:2mm}body>*{display:none!important}#malefica-ticket-print{display:block!important;position:absolute!important;left:0!important;top:0!important;width:72mm!important;background:#fff!important;color:#000!important;font-family:monospace!important;font-size:12px!important;padding:2mm!important}#malefica-ticket-print h2{text-align:center!important;color:#000!important;margin:0 0 8px!important}#malefica-ticket-print .tr{display:flex!important;justify-content:space-between!important;gap:6px!important;border-bottom:1px dashed #999!important;padding:4px 0!important}#malefica-ticket-print .tt{font-size:16px!important;margin:7px 0!important}}';
       document.head.appendChild(st);
       window.print();
-    }catch(e){console.error(e);alert('Error al preparar el ticket: '+e.message);}
-  };
+    }catch(e){
+      console.error('Error al imprimir:',e);
+      alert('Error al preparar el ticket: '+e.message);
+    }
+  }
+
+  window.maleficaPrintTicket=doPrint;
+  window.printTicket=doPrint;
+
+  document.addEventListener('click',function(e){
+    const b=e.target.closest&&e.target.closest('button');
+    if(!b)return;
+    const attr=b.getAttribute('onclick')||'';
+    const m=attr.match(/printTicket\((\d+)\)/);
+    if(!m && !/imprimir/i.test(b.textContent||''))return;
+    let i=m?Number(m[1]):-1;
+    if(i<0){
+      const boxes=[...document.querySelectorAll('#pending .darkbox')];
+      const box=b.closest('.darkbox');
+      i=boxes.indexOf(box);
+    }
+    if(i<0)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    doPrint(i);
+  },true);
 })();
