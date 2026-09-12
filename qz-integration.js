@@ -15,18 +15,21 @@
     ];
     products.splice(0,products.length,...menu,...keep);
 
-    function setDrink(names,price,cat){
-      let p=products.find(x=>names.some(n=>String(x.name||'').toLowerCase()===n.toLowerCase()));
-      if(p){p.price=price;if(cat)p.cat=cat;}
-      else products.push({name:names[0],price:price,cat:cat||'Bebidas',emoji:cat==='Cervezas'?'🍺':'🥤'});
-    }
-    setDrink(['Coca-Cola 600cc','Coca Cola 600cc','Coca-Cola 600'],95,'Bebidas');
-    setDrink(['Coca-Cola 1.5L','Coca-Cola 1.5l','Coca Cola 1.5L'],185,'Bebidas');
-    setDrink(['Cerveza Stella','Stella lata','Stella'],130,'Cervezas');
-    setDrink(['Agua'],85,'Bebidas');
-    setDrink(['Cerveza Zillertal 1L','Zillertal litro','Zillertal 1L','Cerveza Zillertal'],245,'Cervezas');
-    setDrink(['Cerveza Mahou','Mahou lata','Mahou'],85,'Cervezas');
-    setDrink(['Cerveza Corona'],130,'Cervezas');
+    // Limpia variantes/duplicados de bebidas y deja una sola ficha por producto.
+    const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    const removeWhere=test=>{for(let i=products.length-1;i>=0;i--)if(test(norm(products[i].name),products[i]))products.splice(i,1);};
+    removeWhere((n,p)=>p.cat==='Bebidas' && (n.startsWith('agua') || n.startsWith('cocacola600') || n.startsWith('cocacola15')));
+    removeWhere((n,p)=>(p.cat==='Bebidas'||p.cat==='Cervezas') && (n.includes('stella') || n.includes('zilertal') || n.includes('zillertal') || n.includes('mahou') || n.includes('corona')));
+
+    products.push(
+      {name:'Agua 500 ml',price:85,cat:'Bebidas',emoji:'💧'},
+      {name:'Coca-Cola 600 cc',price:95,cat:'Bebidas',emoji:'🥤'},
+      {name:'Coca-Cola 1.5 L',price:185,cat:'Bebidas',emoji:'🥤'},
+      {name:'Cerveza Stella',price:130,cat:'Cervezas',emoji:'🍺'},
+      {name:'Cerveza Zilertal 1 L',price:245,cat:'Cervezas',emoji:'🍺'},
+      {name:'Cerveza Mahou',price:85,cat:'Cervezas',emoji:'🍺'},
+      {name:'Cerveza Corona',price:130,cat:'Cervezas',emoji:'🍺'}
+    );
 
     const style=document.createElement('style');
     style.id='malefica-compact-header';
