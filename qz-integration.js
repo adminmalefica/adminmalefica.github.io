@@ -67,7 +67,7 @@
 
     window.renderProducts=function(){
       const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-      const card=(p,drink=false)=>`<div class="compact-product product" onclick="addCart(${JSON.stringify(p.name)})"><div class="price">$${money(p.price)}</div>${p.img?`<img class="foodimg" src="${p.img}" alt="${esc(p.name)}">`:`<div class="foodemoji">${p.emoji|| (drink?'🥤':'🍔')}</div>`}<b>${esc(p.name)}</b>${p.desc?`<div class="desc">${esc(p.desc)}</div>`:''}</div>`;
+      const card=(p,drink=false)=>`<div class="compact-product product" data-product-name="${esc(p.name)}"><div class="price">$${money(p.price)}</div>${p.img?`<img class="foodimg" src="${p.img}" alt="${esc(p.name)}">`:`<div class="foodemoji">${p.emoji|| (drink?'🥤':'🍔')}</div>`}<b>${esc(p.name)}</b>${p.desc?`<div class="desc">${esc(p.desc)}</div>`:''}</div>`;
       const burgers=products.filter(p=>p.cat==='Hamburguesas');
       const drinks=products.filter(p=>p.cat==='Bebidas'||p.cat==='Cervezas');
       const extras=products.filter(p=>p.cat!=='Hamburguesas'&&p.cat!=='Bebidas'&&p.cat!=='Cervezas'&&p.cat!=='Combos');
@@ -81,6 +81,12 @@
         </div>`;
       try{syncProductSelection();}catch(e){}
     };
+
+    document.addEventListener('click',function(e){
+      const card=e.target.closest&&e.target.closest('.compact-product[data-product-name]');
+      if(!card)return;
+      addCart(card.dataset.productName);
+    });
 
     try{renderProducts();}catch(e){}
   }catch(e){console.error('No se pudo aplicar la carta:',e);}
