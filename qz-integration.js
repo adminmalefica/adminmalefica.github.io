@@ -108,30 +108,51 @@
 // Impresion de ticket robusta: captura directamente el click del boton Imprimir.
 (function(){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const PRINTER_NAME='TP95W Malefica';
 
-  function doPrint(i){
+  function safeText(v){
+    return String(v==null?'':v).replace(/[\u2013\u2014]/g,'-').replace(/\u00d7/g,'x');
+  }
+
+  async function ensureQZ(){
+    if(!window.qz)throw new Error('No se pudo cargar QZ Tray.');
+    if(!qz.websocket.isActive())await qz.websocket.connect();
+  }
+
+  function buildRawTicket(o){
+    const ESC='\x1B',GS='\x1D';
+    const when=o.date?new Date(o.date):new Date();
+    const items=(o.items||[]).map(x=>x.qty+' x '+safeText(x.name)+'   $'+money(x.qty*x.price)).join('\n');
+    let ticket=ESC+'@'+ESC+'a'+'\x01'+ESC+'E'+'\x01'+'MALEFICA BURGER'+ESC+'E'+'\x00'+'\n';
+    ticket+='PEDIDO Nro '+safeText(o.no||'')+'\n'+when.toLocaleDateString('es-UY')+' '+when.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'})+'\n';
+    ticket+='--------------------------------\n'+ESC+'a'+'\x00';
+    if(o.customer)ticket+='Cliente/Mesa: '+safeText(o.customer)+'\n';
+    if(o.type)ticket+='Tipo: '+safeText(o.type)+'\n';
+    if(o.source)ticket+='Origen: '+safeText(o.source)+'\n';
+    ticket+='--------------------------------\n'+items+'\n';
+    if(o.obs)ticket+='--------------------------------\nOBSERVACIONES\n'+safeText(o.obs)+'\n';
+    ticket+='--------------------------------\nPago: '+safeText(o.paymentMethod||'')+'\nEstado: '+safeText(o.paymentStatus||'')+'\n';
+    ticket+=ESC+'E'+'\x01'+'TOTAL: $'+money(o.total)+ESC+'E'+'\x00'+'\n\n\n';
+    ticket+=GS+'V'+'\x00';
+    return ticket;
+  }
+
+  async function printSale(o){
+    await ensureQZ();
+    const printer=await qz.printers.find(PRINTER_NAME);
+    const config=qz.configs.create(printer,{encoding:'CP850'});
+    await qz.print(config,[{type:'raw',format:'command',flavor:'plain',data:buildRawTicket(o)}]);
+  }
+
+  async function doPrint(i){
     try{
       const o=pending[i];
       if(!o){alert('No se encontro el pedido para imprimir.');return;}
       if(o.paymentStatus!=='Pagado'){alert('Primero confirma el pago.');return;}
-
-      document.getElementById('malefica-ticket-print')?.remove();
-      document.getElementById('malefica-ticket-print-style')?.remove();
-
-      const ticket=document.createElement('div');
-      ticket.id='malefica-ticket-print';
-      ticket.innerHTML=`<h2>MALEFICA BURGER</h2><div>Pedido #${esc(o.no)}</div><div>${esc(o.customer||'')}</div><div>${esc(o.type)} - ${esc(o.source)}</div><div>${new Date(o.date).toLocaleString('es-UY')}</div><hr>${(o.items||[]).map(x=>`<div class="tr"><span>${esc(x.qty)} x ${esc(x.name)}</span><span>$${money(x.qty*x.price)}</span></div>`).join('')}<hr><div class="tt"><b>TOTAL $${money(o.total)}</b></div><b>${esc(o.paymentStatus)} - ${esc(o.paymentMethod)}</b>${o.obs?'<p>Obs: '+esc(o.obs)+'</p>':''}`;
-      ticket.style.display='none';
-      document.body.appendChild(ticket);
-
-      const st=document.createElement('style');
-      st.id='malefica-ticket-print-style';
-      st.textContent='@media print{@page{size:80mm auto;margin:2mm}body>*{display:none!important}#malefica-ticket-print{display:block!important;position:absolute!important;left:0!important;top:0!important;width:72mm!important;background:#fff!important;color:#000!important;font-family:monospace!important;font-size:12px!important;padding:2mm!important}#malefica-ticket-print h2{text-align:center!important;color:#000!important;margin:0 0 8px!important}#malefica-ticket-print .tr{display:flex!important;justify-content:space-between!important;gap:6px!important;border-bottom:1px dashed #999!important;padding:4px 0!important}#malefica-ticket-print .tt{font-size:16px!important;margin:7px 0!important}}';
-      document.head.appendChild(st);
-      window.print();
+      await printSale(o);
     }catch(e){
-      console.error('Error al imprimir:',e);
-      alert('Error al preparar el ticket: '+e.message);
+      console.error('Error de impresión QZ:',e);
+      alert('El pedido quedó guardado, pero no se pudo imprimir directamente. Verificá que QZ Tray esté abierto.\n\n'+e.message);
     }
   }
 
@@ -144,6 +165,22 @@
     window.confirmPayment=function(i){
       originalConfirmPayment.call(this,i);
       setTimeout(function(){doPrint(i);},0);
+    };
+  }
+
+  const originalSaveOrder=window.saveOrder;
+  if(typeof originalSaveOrder==='function'){
+    window.saveOrder=function(){
+      const before=new Set(sales.map(x=>x.id));
+      const result=originalSaveOrder.apply(this,arguments);
+      const sale=sales.find(x=>!before.has(x.id));
+      if(sale&&sale.paymentStatus==='Pagado'){
+        setTimeout(function(){
+          const i=pending.findIndex(x=>x.id===sale.id);
+          if(i>=0)doPrint(i);
+        },50);
+      }
+      return result;
     };
   }
 
