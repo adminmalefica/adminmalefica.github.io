@@ -1,5 +1,5 @@
 // Ajustes del Master Malefica Burger
-// Carta vigente + bebidas + encabezado compacto.
+// Carta vigente + bebidas + pantalla principal compacta.
 (function(){
   try{
     const previous=new Map((products||[]).map(p=>[p.name,p]));
@@ -14,23 +14,74 @@
       {name:'Combo Junior',img:imgFor('Combo Junior','Mini Smash'),price:350,cat:'Hamburguesas',desc:'Mini Smash · papas fritas · jugo chico'}
     ];
     products.splice(0,products.length,...menu,...keep);
+
     const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
     const removeWhere=test=>{for(let i=products.length-1;i>=0;i--)if(test(norm(products[i].name),products[i]))products.splice(i,1);};
     removeWhere((n,p)=>p.cat==='Bebidas' && (n.startsWith('agua') || n.startsWith('cocacola600') || n.startsWith('cocacola15')));
-    removeWhere((n,p)=>(p.cat==='Bebidas'||p.cat==='Cervezas') && (n.includes('stella') || n.includes('zilertal') || n.includes('zillertal') || n.includes('mahou') || n.includes('corona')));
+    removeWhere((n,p)=>(p.cat==='Bebidas'||p.cat==='Cervezas') && (n.includes('stella') || n.includes('zilertal') || n.includes('zillertal') || n.includes('mahou') || n.includes('corona') || n.includes('budweiser') || n.includes('badwaiser') || n.includes('patricia')));
+
     products.push(
-      {name:'Agua 500 ml',price:85,cat:'Bebidas',emoji:'💧'},
-      {name:'Coca-Cola 600 cc',price:95,cat:'Bebidas',emoji:'🥤'},
-      {name:'Coca-Cola 1.5 L',price:185,cat:'Bebidas',emoji:'🥤'},
-      {name:'Cerveza Stella',price:130,cat:'Cervezas',emoji:'🍺'},
-      {name:'Cerveza Zilertal 1 L',price:245,cat:'Cervezas',emoji:'🍺'},
-      {name:'Cerveza Mahou',price:85,cat:'Cervezas',emoji:'🍺'},
-      {name:'Cerveza Corona',price:130,cat:'Cervezas',emoji:'🍺'}
+      {name:'Agua 500 ml',img:imgFor('Agua 500 ml'),price:85,cat:'Bebidas',emoji:'💧'},
+      {name:'Coca-Cola 600 cc',img:imgFor('Coca-Cola 600 cc','Coca-Cola 600cc'),price:95,cat:'Bebidas',emoji:'🥤'},
+      {name:'Coca-Cola 1.5 L',img:imgFor('Coca-Cola 1.5 L','Coca-Cola 1.5L'),price:185,cat:'Bebidas',emoji:'🥤'},
+      {name:'Cerveza Stella',img:imgFor('Cerveza Stella','Stella'),price:135,cat:'Cervezas',emoji:'🍺'},
+      {name:'Cerveza Corona',img:imgFor('Cerveza Corona','Corona'),price:120,cat:'Cervezas',emoji:'🍺'},
+      {name:'Cerveza Zilertal 1 L',img:imgFor('Cerveza Zilertal 1 L','Zilertal 1L','Zillertal 1L'),price:245,cat:'Cervezas',emoji:'🍺'},
+      {name:'Cerveza Mahou',img:imgFor('Cerveza Mahou','Mahou'),price:85,cat:'Cervezas',emoji:'🥫'}
     );
+
     const style=document.createElement('style');
-    style.id='malefica-compact-header';
-    style.textContent=`header{padding:3px 10px 5px!important;min-height:0!important}header img{width:min(120px,34vw)!important;max-height:58px!important;margin:0 auto 1px!important}header p{font-size:11px!important;margin:0!important;line-height:1.1!important}nav{top:64px!important;padding:6px!important;gap:5px!important}nav button{padding:8px 10px!important;font-size:13px!important}main{padding-top:8px!important}#pedidos>h2{margin-top:2px!important;margin-bottom:7px!important}.grid{gap:8px!important}.product{padding:9px!important;min-height:72px!important}.product .foodimg,.product .foodemoji{height:92px!important;margin-bottom:7px!important}.product b{font-size:15px!important}.price{font-size:15px!important;margin-top:4px!important}.desc{font-size:11px!important;line-height:1.2!important;margin-top:5px!important}`;
-    document.getElementById(style.id)?.remove();document.head.appendChild(style);
+    style.id='malefica-main-layout';
+    style.textContent=`
+      header{padding:2px 8px 3px!important;min-height:0!important;position:sticky!important}
+      header img{width:min(105px,28vw)!important;max-height:46px!important;margin:0 auto!important}
+      header p{font-size:10px!important;margin:0!important;line-height:1!important}
+      nav{top:51px!important;padding:4px 6px!important;gap:4px!important;justify-content:center!important}
+      nav button{padding:7px 10px!important;font-size:12px!important;border-radius:8px!important}
+      main{max-width:1500px!important;padding:6px 8px!important}
+      #pedidos>h2{display:none!important}
+      #products{margin:0!important}
+      .master-menu-board{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,.85fr);gap:8px;align-items:start}
+      .menu-panel{background:#151515;border:1px solid #ff7a00;border-radius:12px;padding:7px;min-width:0}
+      .menu-title{margin:0 0 6px;color:#ff941f;text-align:center;font-size:18px;line-height:1}
+      .burger-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+      .drink-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+      .compact-product{background:#222;border:1px solid #444;border-radius:9px;padding:5px;cursor:pointer;min-width:0;position:relative}
+      .compact-product:hover{border-color:#ff7a00}
+      .compact-product.selected{border:2px solid #ff7a00;box-shadow:0 0 0 1px rgba(255,122,0,.2)}
+      .compact-product .foodimg{width:100%;height:66px;object-fit:cover;border-radius:7px;display:block;margin:0 0 4px;background:#111}
+      .compact-product .foodemoji{height:44px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:3px}
+      .compact-product b{display:block;font-size:12px;line-height:1.05;white-space:normal}
+      .compact-product .price{position:absolute;right:5px;top:5px;background:#111c;color:#ff9b2f;padding:2px 5px;border-radius:6px;font-size:13px;font-weight:800;margin:0}
+      .compact-product .desc{font-size:8.5px;line-height:1.12;color:#bbb;margin-top:3px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+      .right-stack{display:grid;gap:7px}
+      .side-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+      .side-grid .compact-product .foodimg{height:52px}
+      .side-grid .compact-product .desc{display:none}
+      #pedidos>.box{margin-top:8px!important}
+      #pedidos>h2:nth-of-type(2){margin:8px 0!important;font-size:18px!important}
+      @media(max-width:900px){.master-menu-board{grid-template-columns:1fr}.burger-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.drink-grid,.side-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    `;
+    document.getElementById(style.id)?.remove();
+    document.head.appendChild(style);
+
+    window.renderProducts=function(){
+      const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const card=(p,drink=false)=>`<div class="compact-product product" onclick="addCart(${JSON.stringify(p.name)})"><div class="price">$${money(p.price)}</div>${p.img?`<img class="foodimg" src="${p.img}" alt="${esc(p.name)}">`:`<div class="foodemoji">${p.emoji|| (drink?'🥤':'🍔')}</div>`}<b>${esc(p.name)}</b>${p.desc?`<div class="desc">${esc(p.desc)}</div>`:''}</div>`;
+      const burgers=products.filter(p=>p.cat==='Hamburguesas');
+      const drinks=products.filter(p=>p.cat==='Bebidas'||p.cat==='Cervezas');
+      const extras=products.filter(p=>p.cat!=='Hamburguesas'&&p.cat!=='Bebidas'&&p.cat!=='Cervezas'&&p.cat!=='Combos');
+      document.getElementById('products').innerHTML=`
+        <div class="master-menu-board">
+          <div class="menu-panel"><h2 class="menu-title">🍔 HAMBURGUESAS</h2><div class="burger-grid">${burgers.map(p=>card(p)).join('')}</div></div>
+          <div class="right-stack">
+            <div class="menu-panel"><h2 class="menu-title">🥤 BEBIDAS</h2><div class="drink-grid">${drinks.map(p=>card(p,true)).join('')}</div></div>
+            ${extras.length?`<div class="menu-panel"><h2 class="menu-title">🍟 EXTRAS Y ENTRADAS</h2><div class="side-grid">${extras.map(p=>card(p)).join('')}</div></div>`:''}
+          </div>
+        </div>`;
+      try{syncProductSelection();}catch(e){}
+    };
+
     try{renderProducts();}catch(e){}
   }catch(e){console.error('No se pudo aplicar la carta:',e);}
 })();
