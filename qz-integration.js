@@ -138,6 +138,15 @@
   window.maleficaPrintTicket=doPrint;
   window.printTicket=doPrint;
 
+  // Al confirmar el pago, imprimir inmediatamente el mismo pedido.
+  const originalConfirmPayment=window.confirmPayment;
+  if(typeof originalConfirmPayment==='function'){
+    window.confirmPayment=function(i){
+      originalConfirmPayment.call(this,i);
+      setTimeout(function(){doPrint(i);},0);
+    };
+  }
+
   document.addEventListener('click',function(e){
     const b=e.target.closest&&e.target.closest('button');
     if(!b)return;
