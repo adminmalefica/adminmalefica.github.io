@@ -109,6 +109,26 @@
 (function(){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const PRINTER_NAME='TP95W Malefica';
+  const SIGNER_URL='http://127.0.0.1:8183';
+  let securityReady=false;
+
+  function configureQZSecurity(){
+    if(securityReady||!window.qz)return;
+    qz.security.setCertificatePromise(function(resolve,reject){
+      fetch(SIGNER_URL+'/certificate',{cache:'no-store'})
+        .then(function(r){if(!r.ok)throw new Error('Firmador local no disponible');return r.text();})
+        .then(resolve).catch(reject);
+    });
+    qz.security.setSignatureAlgorithm('SHA512');
+    qz.security.setSignaturePromise(function(toSign){
+      return function(resolve,reject){
+        fetch(SIGNER_URL+'/sign',{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:toSign,cache:'no-store'})
+          .then(function(r){if(!r.ok)throw new Error('No se pudo firmar la solicitud QZ');return r.text();})
+          .then(function(sig){resolve(sig.trim());}).catch(reject);
+      };
+    });
+    securityReady=true;
+  }
 
   function safeText(v){
     return String(v==null?'':v).replace(/[\u2013\u2014]/g,'-').replace(/\u00d7/g,'x');
@@ -116,6 +136,7 @@
 
   async function ensureQZ(){
     if(!window.qz)throw new Error('No se pudo cargar QZ Tray.');
+    configureQZSecurity();
     if(!qz.websocket.isActive())await qz.websocket.connect();
   }
 
