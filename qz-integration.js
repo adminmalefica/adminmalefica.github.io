@@ -206,45 +206,26 @@
     await qz.print(config,[{type:'raw',format:'command',flavor:'plain',data:buildRawTicket(o)}]);
   }
 
+  const printing=new Set();
   async function doPrint(i){
+    const o=pending[i];
+    const key=o&&o.id;
+    if(key&&printing.has(key))return;
+    if(key)printing.add(key);
     try{
-      const o=pending[i];
       if(!o){alert('No se encontro el pedido para imprimir.');return;}
       if(o.paymentStatus!=='Pagado'){alert('Primero confirma el pago.');return;}
       await printSale(o);
     }catch(e){
       console.error('Error de impresión QZ:',e);
       alert('El pedido quedó guardado, pero no se pudo imprimir directamente. Verificá que QZ Tray esté abierto.\n\n'+e.message);
-    }
+    }finally{if(key)setTimeout(()=>printing.delete(key),1500)}
   }
 
   window.maleficaPrintTicket=doPrint;
   window.printTicket=doPrint;
 
-  // Al confirmar el pago, imprimir inmediatamente el mismo pedido.
-  const originalConfirmPayment=window.confirmPayment;
-  if(typeof originalConfirmPayment==='function'){
-    window.confirmPayment=function(i){
-      originalConfirmPayment.call(this,i);
-      setTimeout(function(){doPrint(i);},0);
-    };
-  }
-
-  const originalSaveOrder=window.saveOrder;
-  if(typeof originalSaveOrder==='function'){
-    window.saveOrder=function(){
-      const before=new Set(sales.map(x=>x.id));
-      const result=originalSaveOrder.apply(this,arguments);
-      const sale=sales.find(x=>!before.has(x.id));
-      if(sale&&sale.paymentStatus==='Pagado'){
-        setTimeout(function(){
-          const i=pending.findIndex(x=>x.id===sale.id);
-          if(i>=0)doPrint(i);
-        },50);
-      }
-      return result;
-    };
-  }
+  // El pago habilita la impresión; el ticket se envía al pulsar Imprimir.
 
   document.addEventListener('click',function(e){
     const b=e.target.closest&&e.target.closest('button');
