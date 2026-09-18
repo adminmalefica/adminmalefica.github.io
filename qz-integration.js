@@ -107,9 +107,12 @@
     const cartNode=document.getElementById('cart');
     if(cartNode)new MutationObserver(syncQuantities).observe(cartNode,{childList:true,subtree:true});
 
-    document.addEventListener('click',function(e){
+    if(window.maleficaProductClickHandler)document.removeEventListener('click',window.maleficaProductClickHandler);
+    window.maleficaProductClickHandler=function(e){
       const card=e.target.closest&&e.target.closest('.compact-product[data-product-name]');
-      if(!card)return;
+      if(!card||e.maleficaProductHandled)return;
+      e.maleficaProductHandled=true;
+      e.stopImmediatePropagation();
       const button=e.target.closest('.product-quantity button');
       if(button){
         e.stopPropagation();
@@ -123,7 +126,8 @@
       }
       if(e.target.closest('.product-quantity'))return;
       addCart(card.dataset.productName);
-    });
+    };
+    document.addEventListener('click',window.maleficaProductClickHandler);
 
     try{renderProducts();}catch(e){}
   }catch(e){console.error('No se pudo aplicar la carta:',e);}
