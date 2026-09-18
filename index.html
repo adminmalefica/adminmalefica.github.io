@@ -17,10 +17,14 @@ nav button.active{background:var(--orange)}
 main{max-width:980px;margin:auto;padding:16px}
 h2{color:#ff941f;margin:8px 0 14px}.section{display:none}.section.active{display:block}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.product{background:var(--card);border:1px solid #444;border-radius:15px;padding:14px;min-height:90px;cursor:pointer}
+.product{position:relative;background:var(--card);border:2px solid #444;border-radius:15px;padding:14px;min-height:90px;cursor:pointer}
 .product:active{transform:scale(.99)}
-.product.selected{border:3px solid var(--orange);box-shadow:0 0 0 2px rgba(255,122,0,.28)}
+.product.selected{border-color:#ffd43b;box-shadow:0 0 0 2px rgba(255,212,59,.3)}
 .product{overflow:hidden}
+.product-quantity{display:none;position:absolute;top:8px;left:8px;z-index:1;align-items:center;gap:5px;padding:5px;border-radius:10px;background:#141414;color:#fff;box-shadow:0 2px 8px #0009}
+.product.selected .product-quantity{display:flex}
+.product-quantity .count{min-width:25px;text-align:center;font-size:17px;font-weight:bold;color:#ffd43b}
+.product-quantity button{width:30px;height:30px;border:0;border-radius:7px;background:#ffd43b;color:#111;font-size:21px;font-weight:bold;line-height:1;cursor:pointer}
 .product .foodimg{width:100%;height:125px;object-fit:cover;border-radius:11px;margin:-4px 0 10px;background:#111;display:block}
 .product .foodemoji{height:125px;border-radius:11px;margin:-4px 0 10px;background:linear-gradient(135deg,#191919,#0d0d0d);display:flex;align-items:center;justify-content:center;font-size:56px}
 .product b{font-size:18px}.price{color:#ffb45d;font-size:17px;margin-top:6px}
@@ -194,7 +198,7 @@ function show(id,btn){document.querySelectorAll('.section').forEach(x=>x.classLi
 function icon(cat){return cat==='Hamburguesas'?'🍔':cat==='Combos'?'✨':cat==='Papas'?'🍟':cat==='Entradas'?'🧅':cat==='Cervezas'?'🍺':'🥤'}
 function renderProducts(){
  let groups={};products.forEach(p=>(groups[p.cat]??=[]).push(p));
- document.getElementById('products').innerHTML=Object.entries(groups).map(([g,arr])=>`<div><h2>${icon(g)} ${g}</h2><div class="grid">${arr.map(p=>`<div class="product" onclick="addCart('${p.name.replaceAll("'","\\'")}')">${p.img?`<img class="foodimg" src="${p.img}" alt="${p.name}">`:`<div class="foodemoji">${p.emoji||icon(p.cat)}</div>`}<b>${p.name}</b><div class="price">${p.price>0?'$'+money(p.price):'Precio a cargar'}</div>${p.desc?`<div class="desc">${p.desc}</div>`:''}</div>`).join('')}</div></div>`).join('');
+ document.getElementById('products').innerHTML=Object.entries(groups).map(([g,arr])=>`<div><h2>${icon(g)} ${g}</h2><div class="grid">${arr.map(p=>`<div class="product" data-product-index="${products.indexOf(p)}" onclick="addCart('${p.name.replaceAll("'","\\'")}')"><div class="product-quantity"><span class="count">1</span><button type="button" aria-label="Agregar ${p.name}" onclick="event.stopPropagation();adjustProductQuantity(${products.indexOf(p)},1)">+</button><button type="button" aria-label="Quitar ${p.name}" onclick="event.stopPropagation();adjustProductQuantity(${products.indexOf(p)},-1)">−</button></div>${p.img?`<img class="foodimg" src="${p.img}" alt="${p.name}">`:`<div class="foodemoji">${p.emoji||icon(p.cat)}</div>`}<b>${p.name}</b><div class="price">${p.price>0?'$'+money(p.price):'Precio a cargar'}</div>${p.desc?`<div class="desc">${p.desc}</div>`:''}</div>`).join('')}</div></div>`).join('');
 }
 function addCart(name){
  let p=products.find(x=>x.name===name); if(!p)return;
@@ -202,7 +206,14 @@ function addCart(name){
  if(price<=0){let v=prompt('Ingresá el precio de '+name+':'); if(v===null)return; price=Number(v||0); if(price<=0)return alert('Precio inválido.');}
  let x=cart.find(x=>x.name===name&&x.price===price);x?x.qty++:cart.push({name,price,qty:1});renderCart()
 }
-function renderCart(){document.getElementById('cart').innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-item"><span>${x.qty} × ${x.name}</span><b>$${money(x.qty*x.price)}</b><button onclick="cart.splice(${i},1);renderCart()">✕</button></div>`).join(''):'<div class="empty">Todavía no agregaste productos.</div>';document.getElementById('total').textContent=money(cart.reduce((s,x)=>s+x.qty*x.price,0))}
+function adjustProductQuantity(index,change){
+ const product=products[index],item=cart.find(x=>x.name===product.name);
+ if(!item)return;
+ item.qty+=change;
+ if(item.qty<=0)cart.splice(cart.indexOf(item),1);
+ renderCart();
+}
+function renderCart(){document.getElementById('cart').innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-item"><span>${x.qty} × ${x.name}</span><b>$${money(x.qty*x.price)}</b><button onclick="cart.splice(${i},1);renderCart()">✕</button></div>`).join(''):'<div class="empty">Todavía no agregaste productos.</div>';document.getElementById('total').textContent=money(cart.reduce((s,x)=>s+x.qty*x.price,0));syncProductSelection()}
 function quickNote(t){let o=document.getElementById('obs');o.value+=(o.value?', ':'')+t}
 function setOrderNo(){document.getElementById('orderNo').value=String(nextOrderNo).padStart(3,'0')}
 function clearCart(){cart=[];document.getElementById('customer').value='';document.getElementById('obs').value='';document.getElementById('paymentConfirmed').checked=false;setOrderNo();renderCart()}
@@ -284,14 +295,13 @@ function renderSummary(){
 function renderAll(){setOrderNo();renderProducts();renderCart();renderPending();renderSales();renderStock();renderSummary()}
 renderAll();
 function syncProductSelection(){
- const selectedNames=[...document.querySelectorAll('#cart .cart-item span')].map(el=>el.textContent.replace(/^\d+\s*×\s*/, '').trim());
  document.querySelectorAll('.product').forEach(card=>{
-  const name=card.querySelector('b')?.textContent.trim();
-  card.classList.toggle('selected',selectedNames.includes(name));
+  const product=products[Number(card.dataset.productIndex)];
+  const quantity=cart.filter(item=>item.name===product.name).reduce((sum,item)=>sum+item.qty,0);
+  card.classList.toggle('selected',quantity>0);
+  card.querySelector('.count').textContent=quantity;
  });
 }
-const cartSelectionObserver=new MutationObserver(syncProductSelection);
-cartSelectionObserver.observe(document.getElementById('cart'),{childList:true,subtree:true});
 syncProductSelection();
 </script>
 
