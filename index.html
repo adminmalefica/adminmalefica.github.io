@@ -109,6 +109,22 @@ textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}.wrap{flex-wra
  }
 }
 </style>
+<style id="burger-hard-fix-20260918">
+@media(min-width:900px){
+ #pedidos #products .group-hamburguesas .grid{display:grid!important;grid-template-columns:repeat(4,1fr)!important;grid-template-rows:repeat(2,1fr)!important;gap:5px!important}
+ #pedidos #products .group-hamburguesas .product:nth-child(1){grid-column:1!important;grid-row:1!important;width:100%!important}
+ #pedidos #products .group-hamburguesas .product:nth-child(2){grid-column:2!important;grid-row:1!important;width:100%!important}
+ #pedidos #products .group-hamburguesas .product:nth-child(3){grid-column:3!important;grid-row:1!important;width:100%!important}
+ #pedidos #products .group-hamburguesas .product:nth-child(4){grid-column:4!important;grid-row:1!important;width:100%!important}
+ #pedidos #products .group-hamburguesas .product:nth-child(5){grid-column:1!important;grid-row:2!important;width:100%!important}
+ #pedidos #products .group-hamburguesas .product:nth-child(6){grid-column:2!important;grid-row:2!important;width:100%!important}
+ #pedidos #products .group-hamburguesas .product:nth-child(7){grid-column:3 / span 2!important;grid-row:2!important;width:100%!important}
+ #pedidos #products .group-hamburguesas .product{position:relative!important;min-width:0!important;overflow:hidden!important}
+ #pedidos #products .group-hamburguesas .product b{display:block!important;position:absolute!important;left:5px!important;bottom:32px!important;right:5px!important;z-index:20!important;background:rgba(0,0,0,.72)!important;color:#fff!important;font-size:14px!important;line-height:18px!important;padding:3px 5px!important;visibility:visible!important;opacity:1!important}
+ #pedidos #products .group-hamburguesas .product .desc{position:absolute!important;left:5px!important;right:5px!important;bottom:3px!important;height:28px!important;overflow:hidden!important;z-index:20!important;background:rgba(0,0,0,.72)!important;color:#fff!important;font-size:8px!important;padding:2px 4px!important;visibility:visible!important;opacity:1!important}
+ #pedidos #products .group-hamburguesas .product .foodimg{height:100%!important;margin:0!important}
+}
+</style>
 </head>
 <body>
 <header><img src="malefica-burger-logo.png" alt="Maléfica Burger"><p>MASTER · Gestión del local</p></header>
