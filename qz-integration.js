@@ -1,6 +1,8 @@
-// Ajustes del Master Malefica Burger
-// Carta vigente + bebidas + pantalla principal compacta.
+// Impresion de ticket robusta: captura directamente el click del boton Imprimir.
+// Evita instalar esta integración más de una vez si el JS se carga duplicado.
 (function(){
+  if(window.__maleficaQZPrintIntegrationInstalled)return;
+  window.__maleficaQZPrintIntegrationInstalled=true;
   try{
     const previous=new Map((products||[]).map(p=>[p.name,p]));
     const keep=(products||[]).filter(p=>p.cat!=='Hamburguesas' && p.cat!=='Combos');
