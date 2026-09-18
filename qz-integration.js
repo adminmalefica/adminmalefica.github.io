@@ -48,7 +48,10 @@
       .drink-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
       .compact-product{background:#222;border:1px solid #444;border-radius:9px;padding:5px;cursor:pointer;min-width:0;position:relative}
       .compact-product:hover{border-color:#ff7a00}
-      .compact-product.selected{border:2px solid #ff7a00;box-shadow:0 0 0 1px rgba(255,122,0,.2)}
+      .compact-product.selected{border:2px solid #ffd43b;box-shadow:0 0 0 1px rgba(255,212,59,.3)}
+      .compact-product .product-quantity{position:absolute;left:5px;top:5px;z-index:2;display:flex;align-items:center;gap:3px;padding:2px 3px;border:1px solid #ffd43b;border-radius:7px;background:#111e;color:#fff;font-size:13px;font-weight:bold}
+      .compact-product .product-quantity button{width:23px;height:23px;border:0;border-radius:5px;background:#ffd43b;color:#111;font-size:17px;font-weight:bold;cursor:pointer;padding:0}
+      .compact-product .product-quantity button:focus-visible{outline:2px solid #fff;outline-offset:1px}
       .compact-product .foodimg{width:100%;height:66px;object-fit:cover;border-radius:7px;display:block;margin:0 0 4px;background:#111}
       .compact-product .foodemoji{height:44px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:3px}
       .compact-product b{display:block;font-size:12px;line-height:1.05;white-space:normal}
@@ -79,12 +82,46 @@
             ${extras.length?`<div class="menu-panel"><h2 class="menu-title">🍟 EXTRAS Y ENTRADAS</h2><div class="side-grid">${extras.map(p=>card(p)).join('')}</div></div>`:''}
           </div>
         </div>`;
-      try{syncProductSelection();}catch(e){}
+      try{syncProductSelection();syncQuantities();}catch(e){}
     };
+
+    function syncQuantities(){
+      document.querySelectorAll('#products .compact-product[data-product-name]').forEach(card=>{
+        const name=card.dataset.productName;
+        const qty=cart.filter(item=>item.name===name).reduce((sum,item)=>sum+Number(item.qty||0),0);
+        card.classList.toggle('selected',qty>0);
+        let controls=card.querySelector('.product-quantity');
+        if(!qty){controls?.remove();return;}
+        if(!controls){
+          controls=document.createElement('div');controls.className='product-quantity';
+          const number=document.createElement('span');controls.appendChild(number);
+          for(const [sign,label] of [['+','Agregar otro'],['−','Quitar uno']]){
+            const button=document.createElement('button');button.type='button';button.textContent=sign;
+            button.setAttribute('aria-label',label+' '+name);controls.appendChild(button);
+          }
+          card.prepend(controls);
+        }
+        controls.querySelector('span').textContent=String(qty);
+      });
+    }
+    const cartNode=document.getElementById('cart');
+    if(cartNode)new MutationObserver(syncQuantities).observe(cartNode,{childList:true,subtree:true});
 
     document.addEventListener('click',function(e){
       const card=e.target.closest&&e.target.closest('.compact-product[data-product-name]');
       if(!card)return;
+      const button=e.target.closest('.product-quantity button');
+      if(button){
+        e.stopPropagation();
+        const name=card.dataset.productName;
+        if(button.textContent==='+')addCart(name);
+        else{
+          const index=cart.findIndex(item=>item.name===name);
+          if(index!==-1){if(cart[index].qty>1)cart[index].qty--;else cart.splice(index,1);renderCart();}
+        }
+        return;
+      }
+      if(e.target.closest('.product-quantity'))return;
       addCart(card.dataset.productName);
     });
 
