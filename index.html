@@ -114,6 +114,16 @@ textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}.wrap{flex-wra
  #pedidos>.box{padding:8px!important}
 }
 </style>
+<style id="menu-focus-20260918">
+@media (min-width:1000px){
+ nav button[onclick*="ventas"],nav button[onclick*="stock"],nav button[onclick*="gastos"],nav button[onclick*="resumen"]{display:none!important}
+ nav{justify-content:center!important}
+ #pedidos.active{grid-template-columns:minmax(0,3.35fr) minmax(320px,.95fr)!important}
+ #products>div:nth-child(1) .grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ #products>div:nth-child(1) .product{min-height:0!important}
+ #products>div:nth-child(1) .product .foodimg,#products>div:nth-child(1) .product .foodemoji{height:82px!important}
+}
+</style>
 </head>
 <body>
 <header><img src="malefica-burger-logo.png" alt="Maléfica Burger"><p>MASTER · Gestión del local</p></header>
