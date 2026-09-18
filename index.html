@@ -42,39 +42,53 @@ textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}.wrap{flex-wra
 @media print{header,nav,.no-print{display:none!important}body{background:#fff;color:#000}.ticket{display:block!important}.darkbox,.box{background:#fff;color:#000;border:0}}
 </style>
 
-<style id="pedidos-final-layout">
+<style id="reference-master-layout">
 @media(min-width:1000px){
- body{overflow:hidden;background:#080b0d}
- header{height:48px;padding:2px 8px}header img{max-height:31px;width:auto}header h1{display:none}header p{display:none}
- nav{height:38px;top:48px;padding:3px;justify-content:center}nav button{display:none}nav button:first-child{display:block;padding:6px 20px}
- main{max-width:none;width:100%;height:calc(100vh - 86px);padding:4px;overflow:hidden}
- #pedidos.active{display:grid;grid-template-columns:minmax(0,3.1fr) minmax(320px,.9fr);gap:5px;height:100%}
- #pedidos>h2,#pedidos>h2:nth-of-type(2),#pending{display:none}
- #products{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:2fr 1fr .9fr;gap:4px;height:100%;overflow:hidden}
- .menu-group{border:1px solid #ff6500;border-radius:6px;padding:3px;background:#090c0e;overflow:hidden}
- .group-hamburguesas{grid-column:1/3;grid-row:1}
- .group-papas-y-entradas{grid-column:1/3;grid-row:2}
- .group-extras{grid-column:1;grid-row:3}
- .group-bebidas{grid-column:2;grid-row:3}
- .menu-group h2{height:22px;margin:0 0 2px;font-size:14px;line-height:20px;color:#ff7a18;text-transform:uppercase}
- .menu-group .grid{display:grid;gap:4px;height:calc(100% - 24px)}
- .group-hamburguesas .grid{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr)}
- .group-papas-y-entradas .grid{grid-template-columns:repeat(5,1fr)}
- .group-extras .grid{grid-template-columns:repeat(4,1fr)}
- .group-bebidas .grid{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr)}
- .product{position:relative;height:100%;min-height:0;padding:3px;border:1px solid #ff6500;border-radius:6px;background:#11161a;overflow:hidden}
- .product .foodimg,.product .foodemoji{height:52%;width:100%;margin:0 0 2px;object-fit:cover;border-radius:4px}
- .group-hamburguesas .product .foodimg,.group-hamburguesas .product .foodemoji{height:60%}
- .product .foodemoji{display:flex;align-items:center;justify-content:center;font-size:25px}
- .product b{display:block;font-size:10px;line-height:1;padding-right:34px}
- .product .price{position:absolute;top:3px;right:3px;margin:0;padding:2px 4px;border-radius:8px;background:#ff6900;color:#090909;font-size:11px;font-weight:bold}
- .product .desc{font-size:7.5px;line-height:1.02;margin-top:2px;color:#ddd}
- #pedidos>.box{grid-column:2;grid-row:1;height:100%;margin:0;padding:7px;overflow:auto;background:#11171b;color:#fff;border:1px solid #ff6500;border-radius:7px}
- #pedidos>.box h2{display:block;font-size:17px;margin:0 0 4px;color:#fff}
- #pedidos>.box label{font-size:9px}#pedidos>.box input,#pedidos>.box select,#pedidos>.box textarea{padding:5px;font-size:9px;margin:1px 0 3px;background:#1b2429;color:#fff}
- #pedidos>.box textarea{min-height:32px}.quick{padding:4px 5px!important;font-size:8px!important}
- #cart{min-height:90px;max-height:120px;overflow:auto}.total{font-size:18px!important;margin:4px 0!important}
- #pedidos>.box .btn{padding:7px;font-size:10px}.primary{background:#20b83f!important}
+ *{box-sizing:border-box}
+ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050708}
+ header{height:58px!important;padding:3px 14px!important;background:#030405!important;border-bottom:2px solid #f35b00!important}
+ header img{height:48px!important;max-height:48px!important;width:auto!important;margin-left:8px!important}
+ header h1,header p{display:none!important}
+ nav{position:absolute!important;top:8px!important;left:32%!important;right:auto!important;height:46px!important;padding:0!important;background:transparent!important;border:0!important;z-index:20!important;gap:6px!important}
+ nav button{display:inline-flex!important;height:42px!important;padding:8px 16px!important;font-size:13px!important;border:1px solid #465058!important;border-radius:7px!important;background:#151b1f!important;color:#fff!important}
+ nav button.active,nav button:first-child{background:#f26716!important;border-color:#ff7a20!important}
+ main{position:absolute!important;top:60px!important;left:0!important;right:0!important;bottom:0!important;max-width:none!important;width:auto!important;height:auto!important;padding:5px 7px!important;overflow:hidden!important}
+ #pedidos.active{display:grid!important;grid-template-columns:72% 28%!important;gap:5px!important;height:100%!important}
+ #pedidos>h2,#pending{display:none!important}
+ #products{display:grid!important;grid-template-columns:42% 58%!important;grid-template-rows:56% 24% 20%!important;gap:4px!important;height:100%!important;overflow:hidden!important}
+ .menu-group{margin:0!important;padding:3px!important;background:#050708!important;border:1px solid #f05b12!important;border-radius:7px!important;overflow:hidden!important}
+ .group-hamburguesas{grid-column:1/3!important;grid-row:1!important}
+ .group-papas-y-entradas{grid-column:1/3!important;grid-row:2!important}
+ .group-extras{grid-column:1!important;grid-row:3!important}
+ .group-bebidas{grid-column:2!important;grid-row:3!important}
+ .menu-group h2{height:25px!important;margin:0 0 2px!important;padding:1px 7px!important;font-size:17px!important;line-height:23px!important;color:#ff7621!important;text-transform:uppercase!important;border:0!important}
+ .menu-group .grid{display:grid!important;height:calc(100% - 27px)!important;gap:4px!important}
+ .group-hamburguesas .grid{grid-template-columns:repeat(4,1fr)!important;grid-template-rows:repeat(2,1fr)!important}
+ .group-hamburguesas .product:nth-child(5){grid-column:1!important}
+ .group-papas-y-entradas .grid{grid-template-columns:repeat(5,1fr)!important}
+ .group-extras .grid{grid-template-columns:repeat(4,1fr)!important}
+ .group-bebidas .grid{grid-template-columns:repeat(7,1fr)!important}
+ .product{position:relative!important;height:100%!important;min-height:0!important;padding:3px!important;background:#080b0d!important;border:1px solid #f05b12!important;border-radius:6px!important;overflow:hidden!important;cursor:pointer!important}
+ .product:hover{outline:2px solid #ff7a20!important}
+ .product .foodimg,.product .foodemoji{display:block!important;width:100%!important;height:58%!important;min-height:0!important;margin:0 0 2px!important;object-fit:cover!important;border-radius:4px!important;background:#07090a!important}
+ .group-hamburguesas .product .foodimg,.group-hamburguesas .product .foodemoji{height:62%!important}
+ .group-extras .product .foodimg,.group-extras .product .foodemoji,.group-bebidas .product .foodimg,.group-bebidas .product .foodemoji{height:64%!important}
+ .product .foodemoji{display:flex!important;align-items:center!important;justify-content:center!important;font-size:28px!important}
+ .product b{display:block!important;padding-right:36px!important;font-size:11px!important;line-height:1.02!important;color:#fff!important}
+ .group-hamburguesas .product b{font-size:13px!important}
+ .product .price{position:absolute!important;top:4px!important;right:4px!important;margin:0!important;padding:2px 5px!important;background:#f56817!important;color:#090909!important;border-radius:10px!important;font-size:12px!important;font-weight:900!important}
+ .group-hamburguesas .product .price{font-size:14px!important}
+ .product .desc{margin-top:2px!important;font-size:8px!important;line-height:1.04!important;color:#f1f1f1!important}
+ #pedidos>.box{grid-column:2!important;grid-row:1!important;height:100%!important;margin:0!important;padding:10px!important;background:#080c0f!important;color:#fff!important;border:1px solid #f05b12!important;border-radius:8px!important;overflow:auto!important}
+ #pedidos>.box h2{display:block!important;margin:0 0 8px!important;font-size:21px!important;color:#fff!important}
+ #cart{min-height:215px!important;max-height:245px!important;background:#0d1317!important;border:1px solid #465057!important;border-radius:6px!important;padding:5px!important;overflow:auto!important}
+ #pedidos>.box label{font-size:10px!important;color:#eee!important}
+ #pedidos>.box input,#pedidos>.box select,#pedidos>.box textarea{padding:5px!important;margin:2px 0 4px!important;font-size:10px!important;background:#11191e!important;color:#fff!important;border:1px solid #56616a!important}
+ #pedidos>.box textarea{min-height:35px!important}
+ #pedidos>.box .quick{padding:4px 6px!important;font-size:8px!important}
+ #pedidos>.box .total{font-size:25px!important;color:#ff6818!important;margin:6px 0!important}
+ #pedidos>.box .btn{padding:8px!important;font-size:11px!important}
+ #pedidos>.box .primary{background:#10b936!important;color:#fff!important;font-size:13px!important;font-weight:bold!important}
 }
 </style>
 </head>
