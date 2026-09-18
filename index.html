@@ -260,6 +260,10 @@ function show(id,btn){document.querySelectorAll('.section').forEach(x=>x.classLi
 function icon(cat){return cat==='Hamburguesas'?'🍔':cat==='Combos'?'✨':cat==='Papas'?'🍟':cat==='Entradas'?'🧅':cat==='Cervezas'?'🍺':'🥤'}
 function renderProducts(){
  let groups={};products.forEach(p=>(groups[p.cat]??=[]).push(p));
+ if(groups['Hamburguesas']){
+   const orden=['La Recomendada','Combo Apertura','Smash Intensa','Hechizo de Queso','Doble Impacto','Mini Smash','Combo Junior'];
+   groups['Hamburguesas'].sort((a,b)=>orden.indexOf(a.name)-orden.indexOf(b.name));
+ }
  document.getElementById('products').innerHTML=Object.entries(groups).map(([g,arr])=>`<div class="menu-group group-${g.toLowerCase().replaceAll(' ','-').replaceAll('y','y')}"><h2>${icon(g)} ${g}</h2><div class="grid">${arr.map(p=>`<div class="product" onclick="addCart('${p.name.replaceAll("'","\\'")}')">${p.img?`<img class="foodimg" src="${p.img}" alt="${p.name}">`:`<div class="foodemoji">${p.emoji||icon(p.cat)}</div>`}<b>${p.name}</b><div class="price">${p.price>0?'$'+money(p.price):'Precio a cargar'}</div>${p.desc?`<div class="desc">${p.desc}</div>`:''}</div>`).join('')}</div></div>`).join('');
 }
 function addCart(name){
