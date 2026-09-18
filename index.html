@@ -78,6 +78,37 @@ textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}.wrap{flex-wra
  #pedidos>.box .total{font-size:23px!important;color:#ff6818!important}
 }
 </style>
+<style id="burger-finish-20260918">
+@media(min-width:900px){
+ #pedidos>#products>.group-hamburguesas>.grid{
+   display:grid!important;
+   grid-template-columns:repeat(4,minmax(0,1fr))!important;
+   grid-template-rows:repeat(2,minmax(0,1fr))!important;
+   gap:5px!important;
+ }
+ #pedidos>#products>.group-hamburguesas .product{
+   display:flex!important;flex-direction:column!important;
+   min-width:0!important;min-height:0!important;padding:4px!important;
+ }
+ #pedidos>#products>.group-hamburguesas .product .foodimg,
+ #pedidos>#products>.group-hamburguesas .product .foodemoji{
+   flex:0 0 58%!important;width:100%!important;height:58%!important;object-fit:cover!important;
+ }
+ #pedidos>#products>.group-hamburguesas .product b{
+   display:block!important;visibility:visible!important;opacity:1!important;
+   position:relative!important;z-index:5!important;
+   font-size:15px!important;line-height:1.08!important;font-weight:800!important;
+   color:#fff!important;padding:1px 44px 0 2px!important;white-space:normal!important;
+ }
+ #pedidos>#products>.group-hamburguesas .product .desc{
+   display:block!important;visibility:visible!important;opacity:1!important;
+   font-size:9px!important;line-height:1.05!important;color:#fff!important;padding:1px 2px!important;
+ }
+ #pedidos>#products>.group-hamburguesas .product .price{
+   z-index:8!important;font-size:14px!important;font-weight:900!important;
+ }
+}
+</style>
 </head>
 <body>
 <header><img src="malefica-burger-logo.png" alt="Maléfica Burger"><p>MASTER · Gestión del local</p></header>
