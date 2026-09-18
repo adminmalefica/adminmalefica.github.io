@@ -206,8 +206,9 @@
     await qz.print(config,[{type:'raw',format:'command',flavor:'plain',data:buildRawTicket(o)}]);
   }
 
-  const printing=new Set();
-  const recentlyPrinted=new Map();
+  const printState=window.__maleficaPrintState||(window.__maleficaPrintState={printing:new Set(),recentlyPrinted:new Map()});
+  const printing=printState.printing;
+  const recentlyPrinted=printState.recentlyPrinted;
   async function doPrint(i){
     const o=pending[i];
     const key=o&&o.id;
@@ -229,29 +230,35 @@
 
   // Imprimir al registrar un pedido pagado o confirmar el pago.
   // doPrint evita que el botón Imprimir genere una segunda copia inmediata.
-  const originalConfirmPayment=window.confirmPayment;
-  if(typeof originalConfirmPayment==='function'){
-    window.confirmPayment=function(i){
-      const result=originalConfirmPayment.apply(this,arguments);
-      if(pending[i]?.paymentStatus==='Pagado')setTimeout(()=>doPrint(i),0);
-      return result;
-    };
+  if(!window.__maleficaConfirmPaymentWrapped){
+    const originalConfirmPayment=window.confirmPayment;
+    if(typeof originalConfirmPayment==='function'){
+      window.confirmPayment=function(i){
+        const result=originalConfirmPayment.apply(this,arguments);
+        if(pending[i]?.paymentStatus==='Pagado')setTimeout(()=>window.maleficaPrintTicket(i),0);
+        return result;
+      };
+      window.__maleficaConfirmPaymentWrapped=true;
+    }
   }
 
-  const originalSaveOrder=window.saveOrder;
-  if(typeof originalSaveOrder==='function'){
-    window.saveOrder=function(){
-      const before=new Set(sales.map(x=>x.id));
-      const result=originalSaveOrder.apply(this,arguments);
-      const sale=sales.find(x=>!before.has(x.id));
-      if(sale?.paymentStatus==='Pagado'){
-        setTimeout(()=>{
-          const i=pending.findIndex(x=>x.id===sale.id);
-          if(i>=0)doPrint(i);
-        },50);
-      }
-      return result;
-    };
+  if(!window.__maleficaSaveOrderWrapped){
+    const originalSaveOrder=window.saveOrder;
+    if(typeof originalSaveOrder==='function'){
+      window.saveOrder=function(){
+        const before=new Set(sales.map(x=>x.id));
+        const result=originalSaveOrder.apply(this,arguments);
+        const sale=sales.find(x=>!before.has(x.id));
+        if(sale?.paymentStatus==='Pagado'){
+          setTimeout(()=>{
+            const i=pending.findIndex(x=>x.id===sale.id);
+            if(i>=0)window.maleficaPrintTicket(i);
+          },50);
+        }
+        return result;
+      };
+      window.__maleficaSaveOrderWrapped=true;
+    }
   }
 
   document.addEventListener('click',function(e){
