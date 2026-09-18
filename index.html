@@ -41,6 +41,41 @@ textarea{min-height:70px}.row{display:flex;gap:10px}.row>*{flex:1}.wrap{flex-wra
 @media(max-width:600px){.grid{grid-template-columns:1fr 1fr}.statgrid{grid-template-columns:1fr}.stockrow{grid-template-columns:1.2fr .7fr .7fr}.stockrow span:last-child{display:none}}
 @media print{header,nav,.no-print{display:none!important}body{background:#fff;color:#000}.ticket{display:block!important}.darkbox,.box{background:#fff;color:#000;border:0}}
 </style>
+<style id="malefica-main-layout">
+      header{padding:2px 8px 3px!important;min-height:0!important;position:sticky!important}
+      header img{width:min(105px,28vw)!important;max-height:46px!important;margin:0 auto!important}
+      header p{font-size:10px!important;margin:0!important;line-height:1!important}
+      nav{top:51px!important;padding:4px 6px!important;gap:4px!important;justify-content:center!important}
+      nav button{padding:7px 10px!important;font-size:12px!important;border-radius:8px!important}
+      main{max-width:1500px!important;padding:6px 8px!important}
+      #pedidos>h2{display:none!important}
+      #products{margin:0!important}
+      .master-menu-board{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,.85fr);gap:8px;align-items:start}
+      .menu-panel{background:#151515;border:1px solid #ff7a00;border-radius:12px;padding:7px;min-width:0}
+      .menu-title{margin:0 0 6px;color:#ff941f;text-align:center;font-size:18px;line-height:1}
+      .burger-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+      .drink-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+      .compact-product{background:#222;border:1px solid #444;border-radius:9px;padding:5px;cursor:pointer;min-width:0;position:relative}
+      .compact-product:hover{border-color:#ff7a00}
+      .compact-product.selected{border:2px solid #ffd000;box-shadow:0 0 0 1px rgba(255,208,0,.25)}
+      .compact-product .foodimg{width:100%;height:66px;object-fit:cover;border-radius:7px;display:block;margin:0 0 4px;background:#111}
+      .compact-product .foodemoji{height:44px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:3px}
+      .compact-product b{display:block;font-size:12px;line-height:1.05;white-space:normal}
+      .compact-product .price{position:absolute;right:5px;top:5px;background:#111c;color:#ff9b2f;padding:2px 5px;border-radius:6px;font-size:13px;font-weight:800;margin:0}
+      .compact-product .desc{font-size:8.5px;line-height:1.12;color:#bbb;margin-top:3px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+      .right-stack{display:grid;gap:7px}
+      .side-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+      .side-grid .compact-product .foodimg{height:52px}
+      .side-grid .compact-product .desc{display:none}
+      #pedidos>.box{margin-top:8px!important}
+      #pedidos>h2:nth-of-type(2){margin:8px 0!important;font-size:18px!important}
+      @media(max-width:900px){.master-menu-board{grid-template-columns:1fr}.burger-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.drink-grid,.side-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    
+.compact-product .product-quantity{position:absolute;top:5px;left:5px;z-index:2;display:flex;align-items:center;gap:3px;background:#111e;border:1px solid #ffd000;border-radius:7px;padding:2px 3px;color:#fff;font-size:13px;font-weight:bold}
+.compact-product .product-quantity button{width:23px;height:23px;border:0;border-radius:5px;background:#ffd000;color:#111;font-size:17px;font-weight:bold;line-height:1;cursor:pointer;padding:0}
+.compact-product .product-quantity button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+@media print{.product-quantity{display:none!important}}
+</style>
 </head>
 <body>
 <header><img src="malefica-burger-logo.png" alt="Maléfica Burger"><p>MASTER · Gestión del local</p></header>
@@ -166,6 +201,7 @@ const products=[
 {name:'Cerveza Budweiser',emoji:'🍺',price:0,cat:'Bebidas',desc:''}
 ];
 
+const compactMenu=[{"title":"HAMBURGUESAS","grid":"burger-grid","items":[{"name":"Combo Apertura","price":290,"desc":"Pan tortuga · carne smash · queso cheddar · salsa Maléfica · papas chicas","emoji":"","imageName":"Combo Apertura"},{"name":"Smash Intensa","price":390,"desc":"Pan de queso · doble carne smash · extra queso cheddar · panceta · cebolla caramelizada · salsa barbacoa · salsa Tabasco","emoji":"","imageName":"Smash Intensa"},{"name":"Hechizo de Queso","price":430,"desc":"Pan de queso · medallón de carne · extra cheddar · queso provolone · panceta · cebolla caramelizada · salsa Maléfica","emoji":"","imageName":"Hechizo de Queso"},{"name":"Doble Impacto + papas","price":530,"desc":"Pan de papa · doble medallón de carne · extra queso cheddar · panceta · cebolla caramelizada · salsa Maléfica · papas","emoji":"","imageName":"Doble Impacto"},{"name":"Mini Smash","price":270,"desc":"Pan tortuga · carne smash · queso cheddar · mayonesa · ketchup","emoji":"","imageName":"Mini Smash"},{"name":"Combo Junior","price":350,"desc":"Mini Smash · papas fritas · jugo chico","emoji":"","imageName":"Combo Junior"}]},{"title":"BEBIDAS","grid":"drink-grid","items":[{"name":"Agua 500 ml","price":85,"desc":"","emoji":"💧","imageName":null},{"name":"Coca-Cola 600 cc","price":95,"desc":"","emoji":"🥤","imageName":null},{"name":"Coca-Cola 1.5 L","price":185,"desc":"","emoji":"🥤","imageName":null},{"name":"Cerveza Stella","price":135,"desc":"","emoji":"🍺","imageName":null},{"name":"Cerveza Corona","price":120,"desc":"","emoji":"🍺","imageName":null},{"name":"Cerveza Zilertal 1 L","price":245,"desc":"","emoji":"🍺","imageName":null},{"name":"Cerveza Mahou","price":85,"desc":"","emoji":"🥫","imageName":null}]},{"title":"EXTRAS Y ENTRADAS","grid":"side-grid","items":[{"name":"Papas rústicas caseras para compartir","price":360,"desc":"Papas rústicas en gajos · cheddar · panceta","emoji":"","imageName":"Papas rústicas caseras para compartir"},{"name":"Porción de papas fritas","price":65,"desc":"Papas fritas","emoji":"","imageName":"Porción de papas fritas"},{"name":"Porción XXL","price":95,"desc":"Papas fritas XXL","emoji":"","imageName":"Porción XXL"},{"name":"Aros de cebolla","price":95,"desc":"Entrada de aros de cebolla","emoji":"","imageName":"Aros de cebolla"}]}];
 const CURRENT_MENU_VERSION='2026-09-06';
 let nextOrderNo=Number(localStorage.getItem('master_next_order')||1);
 let stock=JSON.parse(localStorage.getItem('master_stock')||'null')||[];
@@ -176,7 +212,7 @@ let cart=[];
 
 function syncStock(){
  const existing=new Map(stock.map(s=>[s.name,s]));
- stock=products.map(p=>existing.get(p.name)||{name:p.name,qty:20,min:5,cost:0});
+ stock=[...new Set([...stock.map(p=>p.name),...compactMenu.flatMap(g=>g.items.map(p=>p.name))])].map(name=>existing.get(name)||{name,qty:20,min:5,cost:0});
  localStorage.setItem('master_stock',JSON.stringify(stock));
 }
 syncStock();
@@ -192,17 +228,29 @@ function save(){
 }
 function show(id,btn){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderAll()}
 function icon(cat){return cat==='Hamburguesas'?'🍔':cat==='Combos'?'✨':cat==='Papas'?'🍟':cat==='Entradas'?'🧅':cat==='Cervezas'?'🍺':'🥤'}
+function menuProduct(name){return compactMenu.flatMap(g=>g.items).find(p=>p.name===name)}
 function renderProducts(){
- let groups={};products.forEach(p=>(groups[p.cat]??=[]).push(p));
- document.getElementById('products').innerHTML=Object.entries(groups).map(([g,arr])=>`<div><h2>${icon(g)} ${g}</h2><div class="grid">${arr.map(p=>`<div class="product" onclick="addCart('${p.name.replaceAll("'","\\'")}')">${p.img?`<img class="foodimg" src="${p.img}" alt="${p.name}">`:`<div class="foodemoji">${p.emoji||icon(p.cat)}</div>`}<b>${p.name}</b><div class="price">${p.price>0?'$'+money(p.price):'Precio a cargar'}</div>${p.desc?`<div class="desc">${p.desc}</div>`:''}</div>`).join('')}</div></div>`).join('');
+ const card=p=>{
+  const image=products.find(x=>x.name===p.imageName)?.img;
+  const media=image?`<img class="foodimg" src="${image}" alt="${p.name}">`:`<div class="foodemoji">${p.emoji||'🍔'}</div>`;
+  return `<div class="compact-product product" data-product-name="${p.name}" onclick="addCart('${p.name.replaceAll("'","\\'")}')"><div class="price">$${money(p.price)}</div>${media}<b>${p.name}</b>${p.desc?`<div class="desc">${p.desc}</div>`:''}</div>`;
+ };
+ const panel=g=>`<div class="menu-panel"><h2 class="menu-title">${g.title==='HAMBURGUESAS'?'🍔':g.title==='BEBIDAS'?'🥤':'🍟'} ${g.title}</h2><div class="${g.grid}">${g.items.map(card).join('')}</div></div>`;
+ document.getElementById('products').innerHTML=`<div class="master-menu-board">${panel(compactMenu[0])}<div class="right-stack">${panel(compactMenu[1])}${panel(compactMenu[2])}</div></div>`;
+ syncProductSelection();
 }
 function addCart(name){
- let p=products.find(x=>x.name===name); if(!p)return;
- let price=p.price;
- if(price<=0){let v=prompt('Ingresá el precio de '+name+':'); if(v===null)return; price=Number(v||0); if(price<=0)return alert('Precio inválido.');}
- let x=cart.find(x=>x.name===name&&x.price===price);x?x.qty++:cart.push({name,price,qty:1});renderCart()
+ const p=menuProduct(name);if(!p)return;
+ const x=cart.find(x=>x.name===name&&x.price===p.price);x?x.qty++:cart.push({name,price:p.price,qty:1});renderCart()
 }
-function renderCart(){document.getElementById('cart').innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-item"><span>${x.qty} × ${x.name}</span><b>$${money(x.qty*x.price)}</b><button onclick="cart.splice(${i},1);renderCart()">✕</button></div>`).join(''):'<div class="empty">Todavía no agregaste productos.</div>';document.getElementById('total').textContent=money(cart.reduce((s,x)=>s+x.qty*x.price,0))}
+function changeProductQuantity(name,change){
+ const p=menuProduct(name);if(!p)return;
+ const i=cart.findIndex(x=>x.name===name&&x.price===p.price);
+ if(change>0){if(i>=0)cart[i].qty++;else cart.push({name,price:p.price,qty:1})}
+ else if(i>=0){if(cart[i].qty>1)cart[i].qty--;else cart.splice(i,1)}
+ renderCart();
+}
+function renderCart(){document.getElementById('cart').innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-item"><span>${x.qty} × ${x.name}</span><b>$${money(x.qty*x.price)}</b><button onclick="cart.splice(${i},1);renderCart()">✕</button></div>`).join(''):'<div class="empty">Todavía no agregaste productos.</div>';document.getElementById('total').textContent=money(cart.reduce((s,x)=>s+x.qty*x.price,0));syncProductSelection()}
 function quickNote(t){let o=document.getElementById('obs');o.value+=(o.value?', ':'')+t}
 function setOrderNo(){document.getElementById('orderNo').value=String(nextOrderNo).padStart(3,'0')}
 function clearCart(){cart=[];document.getElementById('customer').value='';document.getElementById('obs').value='';document.getElementById('paymentConfirmed').checked=false;setOrderNo();renderCart()}
@@ -284,15 +332,21 @@ function renderSummary(){
 function renderAll(){setOrderNo();renderProducts();renderCart();renderPending();renderSales();renderStock();renderSummary()}
 renderAll();
 function syncProductSelection(){
- const selectedNames=[...document.querySelectorAll('#cart .cart-item span')].map(el=>el.textContent.replace(/^\d+\s*×\s*/, '').trim());
- document.querySelectorAll('.product').forEach(card=>{
-  const name=card.querySelector('b')?.textContent.trim();
-  card.classList.toggle('selected',selectedNames.includes(name));
+ document.querySelectorAll('#products .compact-product').forEach(card=>{
+  const name=card.dataset.productName;
+  const qty=cart.filter(x=>x.name===name).reduce((total,x)=>total+x.qty,0);
+  card.classList.toggle('selected',qty>0);
+  let controls=card.querySelector('.product-quantity');
+  if(!qty){controls?.remove();return}
+  if(!controls){
+   controls=document.createElement('div');controls.className='product-quantity';
+   controls.addEventListener('click',event=>event.stopPropagation());
+   card.prepend(controls);
+  }
+  const index=compactMenu.flatMap(g=>g.items).findIndex(p=>p.name===name);
+  controls.innerHTML=`<span aria-label="Cantidad: ${qty}">${qty}</span><button type="button" aria-label="Agregar otro ${name}" onclick="changeProductQuantity(compactMenu.flatMap(g=>g.items)[${index}].name,1)">+</button><button type="button" aria-label="Quitar un ${name}" onclick="changeProductQuantity(compactMenu.flatMap(g=>g.items)[${index}].name,-1)">−</button>`;
  });
 }
-const cartSelectionObserver=new MutationObserver(syncProductSelection);
-cartSelectionObserver.observe(document.getElementById('cart'),{childList:true,subtree:true});
-syncProductSelection();
 </script>
 
 
