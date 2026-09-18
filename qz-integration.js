@@ -1,6 +1,42 @@
 // Ajustes del Master Malefica Burger
 // Carta vigente + bebidas + pantalla principal compacta.
 (function(){
+  const style=document.createElement('style');
+  style.textContent=`
+    .malefica-dialog-backdrop{position:fixed;inset:0;z-index:10000;background:#000b;display:flex;align-items:center;justify-content:center;padding:16px}
+    .malefica-dialog{width:min(420px,100%);background:#1b1b1b;color:#fff;border:2px solid #ff7a00;border-radius:16px;padding:22px;box-shadow:0 18px 60px #000b;font-family:Arial,sans-serif}
+    .malefica-dialog h2{margin:0 0 12px;color:#ff941f;font-size:21px}
+    .malefica-dialog p{margin:0 0 20px;white-space:pre-line;line-height:1.45}
+    .malefica-dialog-actions{display:flex;justify-content:flex-end;gap:9px}
+    .malefica-dialog-actions button{border:0;border-radius:9px;padding:10px 17px;font-size:15px;font-weight:bold;cursor:pointer;background:#ff7a00;color:white}
+    .malefica-dialog-actions button.secondary{background:#353535}
+    #malefica-print-status{margin:10px 0 0;color:#555;font-size:12px}
+  `;
+  document.head.appendChild(style);
+  const queue=[];
+  let showing=false;
+  function next(){
+    if(showing||!queue.length)return;
+    showing=true;
+    const {message,confirm,resolve}=queue.shift();
+    const backdrop=document.createElement('div');backdrop.className='malefica-dialog-backdrop';
+    const box=document.createElement('div');box.className='malefica-dialog';
+    box.setAttribute('role','alertdialog');box.setAttribute('aria-modal','true');
+    const title=document.createElement('h2');title.textContent='Maléfica Burger';
+    const body=document.createElement('p');body.textContent=String(message);
+    const actions=document.createElement('div');actions.className='malefica-dialog-actions';
+    function close(value){document.removeEventListener('keydown',onKey);backdrop.remove();showing=false;resolve(value);next()}
+    function onKey(e){if(e.key==='Escape'){e.preventDefault();close(false)}}
+    if(confirm){const cancel=document.createElement('button');cancel.className='secondary';cancel.textContent='Cancelar';cancel.onclick=()=>close(false);actions.appendChild(cancel)}
+    const ok=document.createElement('button');ok.textContent=confirm?'Reimprimir':'Aceptar';ok.onclick=()=>close(true);
+    actions.appendChild(ok);box.append(title,body,actions);backdrop.appendChild(box);document.body.appendChild(backdrop);
+    document.addEventListener('keydown',onKey);ok.focus();
+  }
+  function open(message,confirm=false){return new Promise(resolve=>{queue.push({message,confirm,resolve});next()})}
+  window.alert=message=>{open(message)};
+  window.maleficaConfirmReprint=message=>open(message,true);
+})();
+(function(){
   try{
     const previous=new Map((products||[]).map(p=>[p.name,p]));
     const keep=(products||[]).filter(p=>p.cat!=='Hamburguesas' && p.cat!=='Combos');
@@ -152,6 +188,16 @@
   const PRINTER_NAME='TP95W Malefica';
   const SIGNER_URL='http://127.0.0.1:8183';
   let securityReady=false;
+  const printDispatches=new Map();
+
+  function showPrintStatus(o){
+    const box=document.querySelector('#pedidos > .box');
+    if(!box)return;
+    let status=document.getElementById('malefica-print-status');
+    if(!status){status=document.createElement('div');status.id='malefica-print-status';box.appendChild(status)}
+    const count=printDispatches.get(o.id)||0;
+    status.textContent=`Pedido #${o.no}: ${count} envío${count===1?'':'s'} a QZ Tray`;
+  }
 
   function configureQZSecurity(){
     if(securityReady||!window.qz)return;
@@ -202,26 +248,31 @@
   async function printSale(o){
     await ensureQZ();
     const printer=await qz.printers.find(PRINTER_NAME);
-    const config=qz.configs.create(printer,{encoding:'CP850'});
+    const config=qz.configs.create(printer,{encoding:'CP850',copies:1});
     await qz.print(config,[{type:'raw',format:'command',flavor:'plain',data:buildRawTicket(o)}]);
   }
 
   const printing=new Set();
   const recentlyPrinted=new Map();
-  async function doPrint(i){
+  async function doPrint(i,automatic=false){
     const o=pending[i];
     const key=o&&o.id;
-    if(key&&(printing.has(key)||Date.now()-(recentlyPrinted.get(key)||0)<15000))return;
+    if(key&&printing.has(key))return;
+    if(key&&recentlyPrinted.has(key)){
+      if(automatic)return;
+      if(!await window.maleficaConfirmReprint(`El pedido #${o.no} ya se envió a imprimir. ¿Querés sacar otra copia?`))return;
+      if(printing.has(key))return;
+    }
     if(key)printing.add(key);
     try{
       if(!o){alert('No se encontro el pedido para imprimir.');return;}
       if(o.paymentStatus!=='Pagado'){alert('Primero confirma el pago.');return;}
       await printSale(o);
-      if(key)recentlyPrinted.set(key,Date.now());
+      if(key){recentlyPrinted.set(key,Date.now());printDispatches.set(key,(printDispatches.get(key)||0)+1);showPrintStatus(o)}
     }catch(e){
       console.error('Error de impresión QZ:',e);
       alert('El pedido quedó guardado, pero no se pudo imprimir directamente. Verificá que QZ Tray esté abierto.\n\n'+e.message);
-    }finally{if(key)setTimeout(()=>printing.delete(key),1500)}
+    }finally{if(key)printing.delete(key)}
   }
 
   window.maleficaPrintTicket=doPrint;
@@ -233,7 +284,7 @@
   if(typeof originalConfirmPayment==='function'){
     window.confirmPayment=function(i){
       const result=originalConfirmPayment.apply(this,arguments);
-      if(pending[i]?.paymentStatus==='Pagado')setTimeout(()=>doPrint(i),0);
+      if(pending[i]?.paymentStatus==='Pagado')setTimeout(()=>doPrint(i,true),0);
       return result;
     };
   }
@@ -247,7 +298,7 @@
       if(sale?.paymentStatus==='Pagado'){
         setTimeout(()=>{
           const i=pending.findIndex(x=>x.id===sale.id);
-          if(i>=0)doPrint(i);
+          if(i>=0)doPrint(i,true);
         },50);
       }
       return result;
