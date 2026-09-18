@@ -1,8 +1,6 @@
-// Impresion de ticket robusta: captura directamente el click del boton Imprimir.
-// Evita instalar esta integración más de una vez si el JS se carga duplicado.
+// Ajustes del Master Malefica Burger
+// Carta vigente + bebidas + pantalla principal compacta.
 (function(){
-  if(window.__maleficaQZPrintIntegrationInstalled)return;
-  window.__maleficaQZPrintIntegrationInstalled=true;
   try{
     const previous=new Map((products||[]).map(p=>[p.name,p]));
     const keep=(products||[]).filter(p=>p.cat!=='Hamburguesas' && p.cat!=='Combos');
@@ -149,7 +147,10 @@
 })();
 
 // Impresion de ticket robusta: captura directamente el click del boton Imprimir.
+// Evita cargar dos veces la integracion QZ.
 (function(){
+  if(window.__maleficaQZPrintIntegrationInstalled)return;
+  window.__maleficaQZPrintIntegrationInstalled=true;
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const PRINTER_NAME='TP95W Malefica';
   const SIGNER_URL='http://127.0.0.1:8183';
